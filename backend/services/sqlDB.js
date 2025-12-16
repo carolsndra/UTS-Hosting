@@ -1,30 +1,46 @@
 import mysql from "mysql2/promise";
 import fs from "fs";
+import path from "path";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 import dotenv from "dotenv";
 
-// Ambil path environment dari file aiven.env
-const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, "../aiven.env") });
+// Railway/production: ENV dari Railway Variables (dotenv boleh tetap, tapi tidak wajib)
+dotenv.config();
 
-// ===========================
-// ⚙️ Koneksi Database
-// ===========================
-const pool = mysql.createPool({
+// __dirname untuk ESModule
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Base config (Railway Variables)
+const poolConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
+  port: Number(process.env.DB_PORT || 3306),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: {
-    ca: fs.readFileSync(join(__dirname, "ca.pem")),
-  },
-  timezone: "+07:00"
-});
+  timezone: "+07:00",
+};
+
+// ✅ SSL OPTIONAL (untuk Aiven/local kalau butuh)
+// Prioritas 1: kalau Anda set ENV DB_SSL_CA (isi cert PEM string) -> dipakai
+// Prioritas 2: kalau ada file ca.pem di folder ini -> dipakai
+if (process.env.DB_SSL_CA && process.env.DB_SSL_CA.trim().length > 0) {
+  poolConfig.ssl = { ca: process.env.DB_SSL_CA };
+  console.log("🔐 MySQL SSL enabled (DB_SSL_CA from env).");
+} else {
+  const caPath = path.join(__dirname, "ca.pem");
+  if (fs.existsSync(caPath)) {
+    poolConfig.ssl = { ca: fs.readFileSync(caPath, "utf8") };
+    console.log("🔐 MySQL SSL enabled (ca.pem found).");
+  } else {
+    console.log("🔓 MySQL SSL disabled (no CA provided).");
+  }
+}
+
+const pool = mysql.createPool(poolConfig);
 
 pool.on("connection", (conn) => {
   conn.query("SET time_zone = '+07:00'");
@@ -41,9 +57,6 @@ pool.on("connection", (conn) => {
   }
 })();
 
-// ===========================
-// 🧩 Service Helper Functions
-// ===========================
 export const dbService = {
   // ======== USERS ========
   async readUsers() {
@@ -106,7 +119,6 @@ export const dbService = {
     );
   },
 
-  // ======== NEXT AUTO ID ========
   async nextId(table, idColumn = "id") {
     const [rows] = await pool.query(
       `SELECT MAX(${idColumn}) AS maxId FROM ${table}`
@@ -115,8 +127,5 @@ export const dbService = {
   },
 };
 
-// ===========================
-// ✅ Export koneksi pool utama
-// ===========================
 export const db = pool;
 export default pool;

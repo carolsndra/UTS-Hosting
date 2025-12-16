@@ -1,4 +1,5 @@
 # === Environment & Config Files ===
+node_modules
 .env
 *.env
 aiven.env

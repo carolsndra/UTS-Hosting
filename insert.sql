@@ -1,7 +1,40 @@
-INSERT INTO `users` (`id`, `username`, `password`, `email`, `created_at`) VALUES
-('o1q6', 'Jessica', '123456', 'jes@gmail.com', '2025-11-05 15:41:52'),
-('QtYB', 'lys', 'cobaaja', 'lys@yahoo.com', '2025-11-05 15:41:52'),
-('uVMd', 'vilbert', '12345', 'vil@gmail.com', '2025-11-05 15:41:52');
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Dec 16, 2025 at 12:18 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `insert`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `categories`
+--
+
+CREATE TABLE `categories` (
+  `catid` varchar(10) NOT NULL,
+  `namaKategori` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `categories`
+--
 
 INSERT INTO `categories` (`catid`, `namaKategori`) VALUES
 ('K001', 'Alat Tulis'),
@@ -13,19 +46,26 @@ INSERT INTO `categories` (`catid`, `namaKategori`) VALUES
 ('K007', 'Produk Kebersihan'),
 ('K008', 'Lain-lain');
 
-INSERT INTO `suppliers` (`supid`, `namaSupplier`, `kontak`, `alamat`) VALUES
-('S001', 'PT Apsara Tiyasa Sambada', '0272322446', 'Jl. Raya Klaten-Solo Km 7, Klaten'),
-('S002', 'PT Delbi Varia Kreasi', '08116536111', 'Jl. Setrbaguna Komplek Brayan Trade Center No. 36, Lantai 1, Deli Serdang'),
-('S003', 'Mitra Global Buana', '081299593535 ', 'Jl. Kamboja No.2 E, Rt.005/001, Jatipulo, Palmerah, 11430 Kota Administrasi Jakarta Barat DKI Jakart'),
-('S004', 'PT Ermich Karya Abadi', '082147884619', 'Jl. Waringin III No. 12, Kota Teluk Besar, DKI Jakarta'),
-('S005', 'PT Kalingga Tataraya', '02151212028', 'Komplek Pergudangan Tambun City, Blok C7, Jalan Sultan Hasanudin, Bekasi, Jawa Barat 17530'),
-('S006', 'PT Indah Jaya Indonesia', '0215918888', 'Jl. Rayaputra Margomulyo No. 61, Surabaya, Jawa Timur'),
-('S007', 'PT Singer Indonesia', '0217204161', 'Jl. Wolter Monginsidi No. 127-C, Jakarta Selatan, DKI Jakarta'),
-('S008', 'Kalawatu Stationery', '0812-3456-7890', 'Jl. Kalawatu No. 15, Surabaya, Jawa Timur'),
-('S009', 'PT Epson Indonesia', '021-650-5555', 'Jl. Jend. Sudirman Kav. 10, Jakarta Selatan'),
-('S010', 'PT PASEO Indonesia', '021-555-6677', 'Jl. Industri Raya No. 99, Bekasi, Jawa Barat'),
-('S011', 'UD Merpati Putih Sejahtera', '0822-4567-9900', 'Jl. Raya Diponegoro No. 88, Surabaya, Jawa Timur'),
-('S012', 'PT Unilever Indonesia Tbk', '021-5299-5000', 'Grha Unilever, Green Office Park Kav. 3, BSD City, Tangerang, Banten 15345');
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `products`
+--
+
+CREATE TABLE `products` (
+  `id` varchar(10) NOT NULL,
+  `namaItem` varchar(150) DEFAULT NULL,
+  `catid` varchar(10) DEFAULT NULL,
+  `supid` varchar(10) DEFAULT NULL,
+  `keterangan` text DEFAULT NULL,
+  `hargaSatuan` decimal(10,2) DEFAULT NULL,
+  `stok` int(11) DEFAULT NULL,
+  `foto` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `products`
+--
 
 INSERT INTO `products` (`id`, `namaItem`, `catid`, `supid`, `keterangan`, `hargaSatuan`, `stok`, `foto`) VALUES
 ('P001', 'Minyak Singer', 'K008', 'S007', '80 ml', 7000.00, 25, '/uploads/item-1759393131265.jpg'),
@@ -66,3 +106,103 @@ INSERT INTO `products` (`id`, `namaItem`, `catid`, `supid`, `keterangan`, `harga
 ('P036', 'Map Document Keeper 40 Sheet', 'K005', 'S006', '40 lembar', 25000.00, 14, '/uploads/item-1762422137102.jpg'),
 ('P037', 'ID Card 8.5x11.5', 'K006', 'S003', '100 lembar', 52500.00, 42, '/uploads/item-1762422173075.jpeg'),
 ('P038', 'ID Card 10.5x16', 'K006', 'S003', '100 lembar', 65000.00, 16, '/uploads/item-1762422207948.jpg');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `suppliers`
+--
+
+CREATE TABLE `suppliers` (
+  `supid` varchar(10) NOT NULL,
+  `namaSupplier` varchar(150) DEFAULT NULL,
+  `kontak` varchar(50) DEFAULT NULL,
+  `alamat` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `suppliers`
+--
+
+INSERT INTO `suppliers` (`supid`, `namaSupplier`, `kontak`, `alamat`) VALUES
+('S001', 'PT Apsara Tiyasa Sambada', '0272322446', 'Jl. Raya Klaten-Solo Km 7, Klaten'),
+('S002', 'PT Delbi Varia Kreasi', '08116536111', 'Jl. Setrbaguna Komplek Brayan Trade Center No. 36, Lantai 1, Deli Serdang'),
+('S003', 'Mitra Global Buana', '081299593535 ', 'Jl. Kamboja No.2 E, Rt.005/001, Jatipulo, Palmerah, 11430 Kota Administrasi Jakarta Barat DKI Jakart'),
+('S004', 'PT Ermich Karya Abadi', '082147884619', 'Jl. Waringin III No. 12, Kota Teluk Besar, DKI Jakarta'),
+('S005', 'PT Kalingga Tataraya', '02151212028', 'Komplek Pergudangan Tambun City, Blok C7, Jalan Sultan Hasanudin, Bekasi, Jawa Barat 17530'),
+('S006', 'PT Indah Jaya Indonesia', '0215918888', 'Jl. Rayaputra Margomulyo No. 61, Surabaya, Jawa Timur'),
+('S007', 'PT Singer Indonesia', '0217204161', 'Jl. Wolter Monginsidi No. 127-C, Jakarta Selatan, DKI Jakarta'),
+('S008', 'Kalawatu Stationery', '0812-3456-7890', 'Jl. Kalawatu No. 15, Surabaya, Jawa Timur'),
+('S009', 'PT Epson Indonesia', '021-650-5555', 'Jl. Jend. Sudirman Kav. 10, Jakarta Selatan'),
+('S010', 'PT PASEO Indonesia', '021-555-6677', 'Jl. Industri Raya No. 99, Bekasi, Jawa Barat'),
+('S011', 'UD Merpati Putih Sejahtera', '0822-4567-9900', 'Jl. Raya Diponegoro No. 88, Surabaya, Jawa Timur'),
+('S012', 'PT Unilever Indonesia Tbk', '021-5299-5000', 'Grha Unilever, Green Office Park Kav. 3, BSD City, Tangerang, Banten 15345');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` varchar(10) NOT NULL,
+  `username` varchar(100) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `username`, `password`, `email`, `created_at`) VALUES
+('o1q6', 'Jessica', '123456', 'jes@gmail.com', '2025-11-05 15:41:52'),
+('QtYB', 'lys', 'cobaaja', 'lys@yahoo.com', '2025-11-05 15:41:52'),
+('uVMd', 'vilbert', '12345', 'vil@gmail.com', '2025-11-05 15:41:52');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `categories`
+--
+ALTER TABLE `categories`
+  ADD PRIMARY KEY (`catid`);
+
+--
+-- Indexes for table `products`
+--
+ALTER TABLE `products`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `catid` (`catid`),
+  ADD KEY `supid` (`supid`);
+
+--
+-- Indexes for table `suppliers`
+--
+ALTER TABLE `suppliers`
+  ADD PRIMARY KEY (`supid`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `products`
+--
+ALTER TABLE `products`
+  ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`catid`) REFERENCES `categories` (`catid`),
+  ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`supid`) REFERENCES `suppliers` (`supid`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

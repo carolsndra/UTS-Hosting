@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000';
+const API = window.location.origin; 
 
 const historyBody = document.getElementById('historyBody');
 // Filter buttons (History only uses All/In/Out)

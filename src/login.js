@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const response = await fetch('http://localhost:3000/login', {
+                const response = await fetch('/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 console.log('Sending register request:', { username, email, passwordLength: password.length });
                 
-                const response = await fetch('http://localhost:3000/login/register', {
+                const response = await fetch('/login/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

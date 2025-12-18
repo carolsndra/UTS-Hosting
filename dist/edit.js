@@ -1,5 +1,5 @@
 window.addEventListener("DOMContentLoaded", async () => {
-  const API = "http://localhost:3000";
+const API = window.location.origin; 
 
   const params = new URLSearchParams(location.search);
   const id = params.get("id");

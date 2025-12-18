@@ -18,7 +18,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const cancelAddSupplier  = document.getElementById("cancelAddSupplier");
 
 
-  const API = "http://localhost:3000";
+const API = window.location.origin; 
   const rupiah = (n) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",

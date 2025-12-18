@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ transaction.js loaded");
   
   try {
-    const API = "http://localhost:3000";
+const API = window.location.origin; 
 
   const rupiah = (n) =>
     new Intl.NumberFormat("id-ID", {

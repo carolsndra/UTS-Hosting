@@ -4,7 +4,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
-// Railway/production: ENV dari Railway Variables (dotenv boleh tetap, tapi tidak wajib)
 dotenv.config();
 
 // __dirname untuk ESModule
@@ -24,9 +23,15 @@ const poolConfig = {
   timezone: "+07:00",
 };
 
-// ✅ SSL OPTIONAL (untuk Aiven/local kalau butuh)
-// Prioritas 1: kalau Anda set ENV DB_SSL_CA (isi cert PEM string) -> dipakai
-// Prioritas 2: kalau ada file ca.pem di folder ini -> dipakai
+// ===============================
+// ✅ SSL handling (Aiven friendly)
+// ===============================
+// 1) Kalau ada DB_SSL_CA (isi PEM string), pakai itu
+// 2) Kalau ada file ca.pem, pakai itu
+// 3) Kalau DB_SSL=true, pakai ssl: {} (cukup untuk ssl-mode=REQUIRED di banyak provider)
+// 4) Default: ssl off
+const wantSSL = (process.env.DB_SSL || "").toLowerCase() === "true";
+
 if (process.env.DB_SSL_CA && process.env.DB_SSL_CA.trim().length > 0) {
   poolConfig.ssl = { ca: process.env.DB_SSL_CA };
   console.log("🔐 MySQL SSL enabled (DB_SSL_CA from env).");
@@ -35,8 +40,11 @@ if (process.env.DB_SSL_CA && process.env.DB_SSL_CA.trim().length > 0) {
   if (fs.existsSync(caPath)) {
     poolConfig.ssl = { ca: fs.readFileSync(caPath, "utf8") };
     console.log("🔐 MySQL SSL enabled (ca.pem found).");
+  } else if (wantSSL) {
+    poolConfig.ssl = {}; // penting untuk Aiven ssl-mode=REQUIRED
+    console.log("🔐 MySQL SSL enabled (no CA, ssl-mode=REQUIRED).");
   } else {
-    console.log("🔓 MySQL SSL disabled (no CA provided).");
+    console.log("🔓 MySQL SSL disabled.");
   }
 }
 
@@ -58,7 +66,6 @@ pool.on("connection", (conn) => {
 })();
 
 export const dbService = {
-  // ======== USERS ========
   async readUsers() {
     const [rows] = await pool.query("SELECT id, username, email FROM users");
     return rows;
@@ -87,7 +94,6 @@ export const dbService = {
     return rows[0] || null;
   },
 
-  // ======== PRODUCTS ========
   async readProduct() {
     const [rows] = await pool.query("SELECT * FROM products");
     return rows;

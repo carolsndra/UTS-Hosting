@@ -51,7 +51,7 @@
     const cropSave = document.getElementById('cropSave');
     const profileAvatar = document.getElementById('profileAvatar');
     const profilePlaceholder = document.getElementById('profileAvatarPlaceholder');
-    const API = window.API || "http://localhost:3000";
+const API = window.location.origin;
     
     function createCropModal() {
       const modalHTML = `

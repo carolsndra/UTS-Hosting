@@ -1,6 +1,6 @@
 // in.js
 document.addEventListener("DOMContentLoaded", () => {
-  const API = "http://localhost:3000";
+const API = window.location.origin; 
 
   const rowsContainer = document.getElementById("rows");
   const errorEl = document.getElementById("inError");

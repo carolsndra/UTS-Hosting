@@ -260,7 +260,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       localStorage.setItem('user', JSON.stringify(data.user));
-      window.renderAvatarEverywhere?.();
       const sb = document.getElementById('sidebarUsername');
       if (sb) sb.textContent = data.user.username;
       

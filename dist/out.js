@@ -311,6 +311,18 @@ document.addEventListener('DOMContentLoaded', function() {
           <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
         `;
       }
+      if (pImg && pPlaceholder) {
+            pImg.src = avatarUrl;
+            pImg.classList.remove('hidden');
+            pPlaceholder.classList.add('hidden');
+          }
+      if (profileAvatar) {
+        profileAvatar.src = avatarUrl;
+        profileAvatar.classList.remove('hidden');
+      }
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
+      }
     } else {
       if (pImg) pImg.classList.add('hidden');
       if (pPlaceholder) pPlaceholder.classList.remove('hidden');
@@ -415,11 +427,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       alert('Profil berhasil diperbarui!');
       closeProfile();
-    } catch (err) {
-      if (profileError) {
-        profileError.textContent = 'Terjadi kesalahan koneksi.';
-        profileError.classList.remove('hidden');
-      }
     } finally {
       profileSaveBtn.disabled = false;
       profileSaveBtn.textContent = prevText;
@@ -428,6 +435,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   profileAvatarContainer?.addEventListener('click', () => {
     profileFotoInput?.click();
+  });
+
+    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
+  profileFotoInput?.addEventListener('change', function () {
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (profileAvatar) {
+          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.classList.remove('hidden');
+        }
+        if (profilePlaceholder) {
+          profilePlaceholder.classList.add('hidden');
+        }
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
   });
 
   // Load profile avatar on page load

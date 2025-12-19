@@ -106,6 +106,9 @@
       .flex.h-screen {
         position: relative;
       }
+       body {
+    overflow-y: auto;
+  }
 
       aside {
         position: fixed !important;
@@ -126,12 +129,13 @@
       }
 
       main {
-        margin-left: 0 !important;
-        margin: 0.5rem !important;
+        margin: 0 !important;
         padding: 1rem !important;
         width: 100% !important;
-        z-index: 1 !important;
-        position: relative;
+        position: static !important;
+        z-index: auto !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
       }
 
       .header-title {
@@ -200,7 +204,7 @@
       position: fixed !important;
       top: 1rem;
       left: 1rem;
-      z-index: 9999 !important;
+      z-index: 10000 !important;
       background: rgba(255, 255, 255, 0.95);
       border: 1px solid rgba(236, 72, 153, 0.3);
       border-radius: 8px;
@@ -230,7 +234,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.5);
-      z-index: 99 !important;
+      z-index: 90 !important;
       backdrop-filter: blur(2px);
       pointer-events: none !important;
       opacity: 0;
@@ -259,9 +263,9 @@
   <!-- Mobile Overlay -->
   <div class="mobile-overlay no-print" id="mobileOverlay"></div>
 
-  <div class="flex h-screen relative">
+  <div class="flex min-h-screen relative">
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 bg-pink-100/90 shadow-lg flex flex-col no-print relative z-10 lg:relative">
+    <aside id="sidebar" class="w-64 bg-pink-100/90 shadow-lg flex flex-col no-print z-10">
       <div class="p-6 flex items-center justify-between">
         <div class="flex flex-col">
           <div id="sidebarUsername" class="text-2xl font-bold text-pink-600">Loading...</div>
@@ -296,7 +300,8 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 overflow-y-auto bg-overlay rounded-2xl shadow-md border border-pink-200 m-6 relative z-0" style="z-index: 1;">
+      <main class="flex-1 p-6 bg-overlay rounded-2xl shadow-md border border-pink-200 m-6"
+            style="position: relative;">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <div class="header-box">

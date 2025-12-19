@@ -124,6 +124,14 @@ async function deleteProduct(id) {
   }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const sidebarUsername = document.getElementById("sidebarUsername");
+  if (sidebarUsername && user.username) {
+    sidebarUsername.textContent = user.username;
+  }
+});
+
 search.addEventListener("input", applySearch);
 
 // chips click handling (toggle category)
@@ -304,6 +312,13 @@ document.addEventListener('DOMContentLoaded', function() {
             pImg.classList.remove('hidden');
             pPlaceholder.classList.add('hidden');
           }
+          if (profileAvatar) {
+            profileAvatar.src = avatarUrl;
+            profileAvatar.classList.remove('hidden');
+          }
+          if (profilePlaceholder) {
+            profilePlaceholder.classList.add('hidden');
+          }
         } else {
           profileBtn.innerHTML = '👤';
         }
@@ -323,6 +338,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   profileAvatarContainer?.addEventListener('click', () => {
     profileFotoInput?.click();
+  });
+
+    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
+  profileFotoInput?.addEventListener('change', function () {
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (profileAvatar) {
+          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.classList.remove('hidden');
+        }
+        if (profilePlaceholder) {
+          profilePlaceholder.classList.add('hidden');
+        }
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
   });
 
   // Load profile avatar on page load

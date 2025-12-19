@@ -877,6 +877,13 @@ if (printBtn) {
             pImg.classList.remove('hidden');
             pPlaceholder.classList.add('hidden');
           }
+          if (profileAvatar) {
+            profileAvatar.src = avatarUrl;
+            profileAvatar.classList.remove('hidden');
+          }
+          if (profilePlaceholder) {
+            profilePlaceholder.classList.add('hidden');
+          }
         } else {
           profileBtn.innerHTML = '👤';
         }
@@ -884,11 +891,6 @@ if (printBtn) {
       
       alert('Profil berhasil diperbarui!');
       closeProfile();
-    } catch (err) {
-      if (profileError) {
-        profileError.textContent = 'Terjadi kesalahan koneksi.';
-        profileError.classList.remove('hidden');
-      }
     } finally {
       profileSaveBtn.disabled = false;
       profileSaveBtn.textContent = prevText;
@@ -897,6 +899,23 @@ if (printBtn) {
 
   profileAvatarContainer?.addEventListener('click', () => {
     profileFotoInput?.click();
+  });
+
+    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
+  profileFotoInput?.addEventListener('change', function () {
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (profileAvatar) {
+          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.classList.remove('hidden');
+        }
+        if (profilePlaceholder) {
+          profilePlaceholder.classList.add('hidden');
+        }
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
   });
 
   // Load profile avatar on page load

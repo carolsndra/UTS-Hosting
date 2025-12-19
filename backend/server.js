@@ -22,29 +22,12 @@ console.log("Cloudinary:", {
   secret: process.env.CLOUDINARY_API_SECRET ? "OK" : "MISSING",
 });
 
-// YANG INI NANTI DIHAPUSSSSSSSSSSS
-// Pastikan folder uploads ada (prioritaskan root uploads karena profile upload pakai process.cwd())
-const uploadsDirRoot = path.join(__dirname, "../uploads");
-const uploadsDirBackend = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDirRoot)) {
-  fs.mkdirSync(uploadsDirRoot, { recursive: true });
-}
-if (!fs.existsSync(uploadsDirBackend)) {
-  fs.mkdirSync(uploadsDirBackend, { recursive: true });
-}
-// SAMPE SINI HAPUSSSSSSs
-
 const app = express();
 
 /* ---------- Global middlewares ---------- */
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-
-// YANG INI JG BISA YANG UPLOADS DIHAPUS
-// Static files untuk gambar yang di-upload (prioritaskan root uploads untuk profile, lalu backend uploads untuk products)
-app.use("/uploads", express.static(uploadsDirRoot));
-app.use("/uploads", express.static(uploadsDirBackend));
 
 // Static files untuk halaman login dan asset di src
 app.use("/src", express.static(path.join(__dirname, "../src")));

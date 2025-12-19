@@ -1,4 +1,5 @@
 import { db } from "../services/sqlDB.js";
+import cloudinary from "../services/cloudinary.js";
 
 export const itemsController = {
   // GET /items?q=keyword
@@ -41,11 +42,11 @@ export const itemsController = {
         LEFT JOIN categories c ON c.catid = p.catid
         WHERE p.id = ?
       `, [id]);
-      
+
       if (rows.length === 0) {
         return res.status(404).json({ message: "Produk tidak ditemukan" });
       }
-      
+
       res.json(rows[0]);
     } catch (err) {
       console.error("Get product error:", err);
@@ -53,11 +54,10 @@ export const itemsController = {
     }
   },
 
-  // POST /items (multipart/form-data; field file = "foto")
+  // POST /items (Cloudinary)
   async create(req, res) {
     try {
       const {
-        id = "",
         namaItem = "",
         catid = null,
         supid = null,
@@ -79,7 +79,7 @@ export const itemsController = {
         return res.status(400).json({ message: "stok harus bilangan bulat ≥ 0" });
       }
 
-      // generate ID manual (misal P001, P002, dst)
+      // generate ID (P001, P002, ...)
       const [last] = await db.query(
         "SELECT id FROM products ORDER BY id DESC LIMIT 1"
       );
@@ -89,34 +89,45 @@ export const itemsController = {
         newId = "P" + String(lastNum).padStart(3, "0");
       }
 
-      const foto = req.file ? `/uploads/${req.file.filename}` : null;
+      let fotoUrl = null;
+
+      // ☁️ UPLOAD KE CLOUDINARY
+      if (req.file) {
+        const uploadResult = await cloudinary.uploader.upload(
+          `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+          { folder: "products" }
+        );
+        fotoUrl = uploadResult.secure_url;
+      }
 
       await db.query(
-        `INSERT INTO products 
+        `INSERT INTO products
         (id, namaItem, catid, supid, keterangan, hargaSatuan, stok, foto)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [newId, namaItem, catid, supid, keterangan, harga, stokNum, foto]
+        [newId, namaItem, catid, supid, keterangan, harga, stokNum, fotoUrl]
       );
 
-      const [rows] = await db.query("SELECT * FROM products WHERE id = ?", [newId]);
+      const [rows] = await db.query(
+        "SELECT * FROM products WHERE id = ?",
+        [newId]
+      );
+
       return res.status(201).json(rows[0]);
     } catch (e) {
       console.error("Create product error:", e);
-      return res.status(500).json({ message: e.message || "Gagal menambah produk" });
+      return res.status(500).json({ message: "Gagal menambah produk" });
     }
   },
 
-  // PUT /items/:id
+  // PUT /items/:id (Cloudinary)
   async update(req, res) {
     try {
-      const id = req.params.id; // VARCHAR(10)
+      const id = req.params.id;
 
-      const [rows] = await db.query(`
-        SELECT p.*, c.namaKategori
-        FROM products p
-        LEFT JOIN categories c ON c.catid = p.catid
-        WHERE p.id = ?
-      `, [id]);
+      const [rows] = await db.query(
+        "SELECT * FROM products WHERE id = ?",
+        [id]
+      );
       if (rows.length === 0) {
         return res.status(404).json({ message: "Produk tidak ditemukan" });
       }
@@ -132,9 +143,6 @@ export const itemsController = {
       let stok = p.stok ?? current.stok;
       let foto = current.foto;
 
-      if (req.file) foto = `/uploads/${req.file.filename}`;
-      if (p.foto === "") foto = null;
-
       const hargaNum = Number(hargaSatuan);
       const stokNum = Number(stok);
       if (Number.isNaN(hargaNum) || hargaNum < 0) {
@@ -144,23 +152,33 @@ export const itemsController = {
         return res.status(400).json({ message: "stok harus bilangan bulat ≥ 0" });
       }
 
+      // ☁️ UPDATE FOTO KE CLOUDINARY
+      if (req.file) {
+        const uploadResult = await cloudinary.uploader.upload(
+          `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+          { folder: "products" }
+        );
+        foto = uploadResult.secure_url;
+      }
+
+      if (p.foto === "") foto = null;
+
       await db.query(
-        `UPDATE products 
-         SET namaItem=?, catid=?, supid=?, keterangan=?, hargaSatuan=?, stok=?, foto=? 
+        `UPDATE products
+         SET namaItem=?, catid=?, supid=?, keterangan=?, hargaSatuan=?, stok=?, foto=?
          WHERE id=?`,
         [namaItem, catid, supid, keterangan, hargaNum, stokNum, foto, id]
       );
 
-      const [updated] = await db.query(`
-        SELECT p.*, c.namaKategori
-        FROM products p
-        LEFT JOIN categories c ON c.catid = p.catid
-        WHERE p.id = ?
-      `, [id]);
+      const [updated] = await db.query(
+        "SELECT * FROM products WHERE id = ?",
+        [id]
+      );
+
       return res.json(updated[0]);
     } catch (e) {
       console.error("Update product error:", e);
-      return res.status(500).json({ message: e.message || "Gagal mengubah produk" });
+      return res.status(500).json({ message: "Gagal mengubah produk" });
     }
   },
 
@@ -169,12 +187,10 @@ export const itemsController = {
     try {
       const id = req.params.id;
 
-      const [rows] = await db.query(`
-        SELECT p.*, c.namaKategori
-        FROM products p
-        LEFT JOIN categories c ON c.catid = p.catid
-        WHERE p.id = ?
-      `, [id]);
+      const [rows] = await db.query(
+        "SELECT * FROM products WHERE id = ?",
+        [id]
+      );
       if (rows.length === 0) {
         return res.status(404).json({ message: "Produk tidak ditemukan" });
       }
@@ -185,7 +201,7 @@ export const itemsController = {
       res.json({ message: "Produk dihapus", deleted });
     } catch (e) {
       console.error("Delete product error:", e);
-      res.status(500).json({ message: e.message || "Gagal menghapus produk" });
+      res.status(500).json({ message: "Gagal menghapus produk" });
     }
   },
 };

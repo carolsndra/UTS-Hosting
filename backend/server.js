@@ -1,11 +1,12 @@
+import path from "path";
+import { fileURLToPath } from "url"; 
+import fs from "fs";
+// __dirname untuk ESModule
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-
-import path from "path";
-import open from "open";
-import { fileURLToPath } from "url";
-import fs from "fs";
 
 // routes & controllers
 import authRoutes from "./routes/authRoutes.js";
@@ -15,12 +16,13 @@ import supplierRoutes from "./routes/supplierRoutes.js"; // ✅ Tambahan route s
 import { dashboard } from "./controllers/dashboard.js";
 import transactionsRoutes from "./routes/transactionsRoutes.js"; // ✅ Tambah ini
 
-dotenv.config();
+console.log("Cloudinary:", {
+  name: process.env.CLOUDINARY_CLOUD_NAME,
+  key: process.env.CLOUDINARY_API_KEY ? "OK" : "MISSING",
+  secret: process.env.CLOUDINARY_API_SECRET ? "OK" : "MISSING",
+});
 
-// __dirname untuk ESModule
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
-
+// YANG INI NANTI DIHAPUSSSSSSSSSSS
 // Pastikan folder uploads ada (prioritaskan root uploads karena profile upload pakai process.cwd())
 const uploadsDirRoot = path.join(__dirname, "../uploads");
 const uploadsDirBackend = path.join(__dirname, "uploads");
@@ -30,6 +32,7 @@ if (!fs.existsSync(uploadsDirRoot)) {
 if (!fs.existsSync(uploadsDirBackend)) {
   fs.mkdirSync(uploadsDirBackend, { recursive: true });
 }
+// SAMPE SINI HAPUSSSSSSs
 
 const app = express();
 
@@ -38,6 +41,7 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
+// YANG INI JG BISA YANG UPLOADS DIHAPUS
 // Static files untuk gambar yang di-upload (prioritaskan root uploads untuk profile, lalu backend uploads untuk products)
 app.use("/uploads", express.static(uploadsDirRoot));
 app.use("/uploads", express.static(uploadsDirBackend));

@@ -1,5 +1,6 @@
 import { db } from "../services/sqlDB.js";
 import bcrypt from "bcrypt";
+import cloudinary from "../services/cloudinary.js";
 
 /* ===================== Helper: Random ID ===================== */
 function generateUserId() {
@@ -47,7 +48,12 @@ export async function login(req, res) {
 
     res.json({
       message: "Login sukses",
-      user: { id: user.id, username: user.username, email: user.email, avatar: user.foto || null }
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        avatar: user.foto || null
+      }
     });
 
   } catch (err) {
@@ -61,25 +67,20 @@ export async function register(req, res) {
   try {
     const { username, email, password } = req.body || {};
 
-    console.log("📥 Register request:", { username, email, passwordLength: password?.length });
-
     if (!username?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({ message: "Semua field wajib diisi" });
     }
 
-    // Update validasi password sesuai frontend: minimal 8 karakter
     if (password.length < 8) {
       return res.status(400).json({ message: "Password minimal 8 karakter" });
     }
 
-    // Validasi password harus mengandung simbol
-    const symbolRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+    const symbolRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
     if (!symbolRegex.test(password)) {
-      return res.status(400).json({ message: "Password harus mengandung minimal satu simbol (!@#$%^&* dll)" });
+      return res.status(400).json({ message: "Password harus mengandung minimal satu simbol" });
     }
 
-    // Validasi email harus ada @
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       return res.status(400).json({ message: "Email harus mengandung karakter @" });
     }
 
@@ -102,8 +103,6 @@ export async function register(req, res) {
       [id, username, email, hashed]
     );
 
-    console.log("✅ Register berhasil untuk user:", username);
-
     res.json({
       message: "Registrasi berhasil",
       user: { id, username, email }
@@ -111,27 +110,18 @@ export async function register(req, res) {
 
   } catch (err) {
     console.error("❌ Error register:", err);
-    console.error("❌ Error details:", {
-      message: err.message,
-      code: err.code,
-      sqlMessage: err.sqlMessage,
-      stack: err.stack
-    });
-    res.status(500).json({ 
-      message: "Server error",
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    res.status(500).json({ message: "Server error" });
   }
 }
 
-/* ===================== UPDATE PROFILE (FINAL FIX) ===================== */
-/* ===================== UPDATE PROFILE (WITH FOTO) ===================== */
+/* ===================== UPDATE PROFILE (CLOUDINARY) ===================== */
 export async function updateProfile(req, res) {
   try {
     const { id, username, email, password } = req.body || {};
-    const foto = req.file ? req.file.filename : null;
 
-    if (!id) return res.status(400).json({ message: "User ID diperlukan" });
+    if (!id) {
+      return res.status(400).json({ message: "User ID diperlukan" });
+    }
 
     const [exist] = await db.query(
       "SELECT id FROM users WHERE id = ? LIMIT 1",
@@ -142,7 +132,6 @@ export async function updateProfile(req, res) {
       return res.status(404).json({ message: "User tidak ditemukan" });
     }
 
-    // Cek username/email dipakai user lain
     const [conflict] = await db.query(
       "SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?",
       [username, email, id]
@@ -152,7 +141,19 @@ export async function updateProfile(req, res) {
       return res.status(409).json({ message: "Username/email sudah digunakan" });
     }
 
-    // Bangun query dinamis
+    let avatarUrl = null;
+
+    // ☁️ UPLOAD AVATAR KE CLOUDINARY
+    if (req.file) {
+      const uploadResult = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+        {
+          folder: "avatars",
+        }
+      );
+      avatarUrl = uploadResult.secure_url;
+    }
+
     let query = "UPDATE users SET username = ?, email = ?";
     const params = [username, email];
 
@@ -162,10 +163,9 @@ export async function updateProfile(req, res) {
       params.push(hashed);
     }
 
-    // 👉 TAMBAHAN: Perbarui foto jika ada upload
-    if (foto) {
+    if (avatarUrl) {
       query += ", foto = ?";
-      params.push(foto);
+      params.push(avatarUrl);
     }
 
     query += " WHERE id = ?";
@@ -179,7 +179,7 @@ export async function updateProfile(req, res) {
     );
 
     const userData = updated[0];
-    // Map foto to avatar for frontend consistency
+
     res.json({
       message: "Profile berhasil diperbarui",
       user: {
@@ -187,13 +187,11 @@ export async function updateProfile(req, res) {
         username: userData.username,
         email: userData.email,
         avatar: userData.foto || null
-      },
-      fotoBaru: foto || null
+      }
     });
-    
+
   } catch (err) {
     console.error("❌ Error update profile:", err);
     res.status(500).json({ message: "Server error" });
   }
 }
-

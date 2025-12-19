@@ -1,14 +1,17 @@
 import mysql from "mysql2/promise";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-
-dotenv.config();
+import { fileURLToPath } from "url";
 
 // __dirname untuk ESModule
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({
+  path: path.join(__dirname, "../.env"),
+  override: false,
+});
 
 // Base config (Railway Variables)
 const poolConfig = {
@@ -61,9 +64,11 @@ pool.on("connection", (conn) => {
     console.log("✅ Database connected successfully");
     conn.release();
   } catch (err) {
-    console.error("❌ Failed to connect to database:", err.message);
+    console.error("❌ Failed to connect to database FULL ERROR:");
+    console.error(err); // <-- INI PENTING
   }
 })();
+
 
 export const dbService = {
   async readUsers() {

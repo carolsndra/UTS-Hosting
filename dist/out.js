@@ -264,7 +264,6 @@ const API = window.location.origin;
 
 // ====== Profile Modal Logic ======
 document.addEventListener('DOMContentLoaded', function() {
-  const API = "http://localhost:3000";
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
   const profileClose = document.getElementById('profileClose');
@@ -295,23 +294,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (profileEmailInputEl) profileEmailInputEl.value = u.email || '';
     if (profilePasswordInputEl) profilePasswordInputEl.value = '';
 
-    const avatarFilename = u.avatar || null;
+    
+    const avatarUrl = u.avatar || null;
     const pImg = document.getElementById('profileAvatar');
     const pPlaceholder = document.getElementById('profileAvatarPlaceholder');
 
-    if (avatarFilename) {
-      const avatarUrl = `${API}/uploads/${avatarFilename}`;
+    if (avatarUrl) {
       if (pImg) {
         pImg.src = avatarUrl;
         pImg.classList.remove('hidden');
       }
       if (pPlaceholder) pPlaceholder.classList.add('hidden');
-      const profileBtn = document.getElementById('profileBtn');
-      if (profileBtn) profileBtn.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>`;
+
+      if (profileBtn) {
+        profileBtn.innerHTML = `
+          <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
+        `;
+      }
     } else {
       if (pImg) pImg.classList.add('hidden');
       if (pPlaceholder) pPlaceholder.classList.remove('hidden');
-      const profileBtn = document.getElementById('profileBtn');
       if (profileBtn) profileBtn.innerHTML = '👤';
     }
 
@@ -394,21 +396,21 @@ document.addEventListener('DOMContentLoaded', function() {
       const sb = document.getElementById('sidebarUsername');
       if (sb) sb.textContent = data.user.username;
       
-      const profileBtn = document.getElementById('profileBtn');
+      const avatarUrl = data.user.avatar;
+
       if (profileBtn) {
-          if (data.user.avatar) {
-              const avatarUrl = `${API}/uploads/${data.user.avatar}`;
-              profileBtn.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>`;
-              const pImg = document.getElementById('profileAvatar');
-              const pPlaceholder = document.getElementById('profileAvatarPlaceholder');
-              if (pImg && pPlaceholder) {
-                pImg.src = avatarUrl;
-                pImg.classList.remove('hidden');
-                pPlaceholder.classList.add('hidden');
-              }
-          } else {
-              profileBtn.innerHTML = '👤';
+        if (avatarUrl) {
+          profileBtn.innerHTML = `
+            <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
+          `;
+          if (pImg && pPlaceholder) {
+            pImg.src = avatarUrl;
+            pImg.classList.remove('hidden');
+            pPlaceholder.classList.add('hidden');
           }
+        } else {
+          profileBtn.innerHTML = '👤';
+        }
       }
       
       alert('Profil berhasil diperbarui!');
@@ -433,11 +435,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');
     if (profileBtn && u.avatar) {
-      const avatarUrl = `${API}/uploads/${u.avatar}`;
-      profileBtn.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>`;
+      const avatarUrl = u.avatar;
+        profileBtn.innerHTML = `
+          <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
+        `;
     }
   })();
-});
+})();
 
 // ====== Mobile Menu Functionality ======
 document.addEventListener('DOMContentLoaded', function() {

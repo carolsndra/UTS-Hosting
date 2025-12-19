@@ -1,6 +1,7 @@
 // Profile Crop Functionality - Shared across all pages
 // Usage: Include this script after profile modal HTML and before closing </script> tag
-
+const API = window.location.origin;
+   
 (function() {
   'use strict';
   
@@ -51,8 +52,7 @@
     const cropSave = document.getElementById('cropSave');
     const profileAvatar = document.getElementById('profileAvatar');
     const profilePlaceholder = document.getElementById('profileAvatarPlaceholder');
-const API = window.location.origin;
-    
+ 
     function createCropModal() {
       const modalHTML = `
         <div id="cropModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[60]" style="position: fixed !important; display: none;">
@@ -406,13 +406,13 @@ const API = window.location.origin;
     }
     
     // Replace existing change listener
-    profileFotoInput.addEventListener('change', function (e) {
+    profileFotoInput.addEventListener('change', function () {
       if (this.files && this.files[0]) {
         openCropModal(this.files[0]);
       } else {
         const u = JSON.parse(localStorage.getItem('user') || '{}');
         if (u.avatar && profileAvatar) {
-          profileAvatar.src = `${API}/uploads/${u.avatar}`;
+          profileAvatar.src = u.avatar; // Cloudinary URL
           profileAvatar.classList.remove('hidden');
           if (profilePlaceholder) profilePlaceholder.classList.add('hidden');
         } else {
@@ -421,5 +421,5 @@ const API = window.location.origin;
         }
       }
     });
-  }
-})();
+  } 
+})(); 

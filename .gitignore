@@ -1,14 +1,6 @@
 # === Environment & Config Files ===
 node_modules
 .env
-*.env
-aiven.env
-backend/aiven.env
 
 # === SSL / Security Certificates ===
-*.pem
-*.crt
-*.key
-*.csr
-*.cert
 ca.pem

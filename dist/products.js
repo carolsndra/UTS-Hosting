@@ -188,23 +188,16 @@ function highlightActivePage() {
   });
 }
 
-// === MAIN INITIALIZATION ===
 document.addEventListener("DOMContentLoaded", () => {
-  // Load products
+
   reloadProducts();
-
-  // Render profile sidebar
   renderSidebarProfile();
-
-  // Highlight active page
   highlightActivePage();
 
-  // Search functionality
   if (search) {
     search.addEventListener("input", applySearch);
   }
 
-  // Category chips filter
   if (chipsContainer) {
     chipsContainer.addEventListener("click", (e) => {
       const btn = e.target.closest(".chip");
@@ -218,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Mobile menu
   const btn = document.getElementById("mobileMenuBtn");
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("mobileOverlay");
@@ -244,7 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay.addEventListener("click", close);
   }
 
-  // Logout button
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", (e) => {
@@ -254,7 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // === PROFILE MODAL ===
   const profileBtn = document.getElementById("profileBtn");
   const profileModal = document.getElementById("profileModal");
   const profileClose = document.getElementById("profileClose");
@@ -348,7 +338,6 @@ document.addEventListener("DOMContentLoaded", () => {
           fd.append("password", passwordInput.value);
         }
 
-        // Include avatar if uploaded via crop
         if (fotoInput && fotoInput.files && fotoInput.files[0]) {
           fd.append("foto", fotoInput.files[0]);
         }
@@ -367,14 +356,12 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
             if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             
-            // Build user object with updated data
             const updatedUser = {
               ...user,
               username: usernameInput.value.trim(),
               email: emailInput.value.trim()
             };
             
-            // If avatar was uploaded, use the current preview
             if (avatarImg && !avatarImg.classList.contains('hidden')) {
               updatedUser.avatar = avatarImg.src;
             }
@@ -389,7 +376,6 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("user", JSON.stringify(data.user));
           renderSidebarProfile();
 
-          alert("Profil berhasil diperbarui");
           closeProfile();
         } catch (err) {
           alert("Gagal update profil: " + err.message);

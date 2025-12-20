@@ -707,6 +707,24 @@ if (printBtn) {
   const profileAvatarContainer = document.getElementById('profileAvatarContainer');
   const profilePlaceholder = document.getElementById('profileAvatarPlaceholder');
 
+  let tempOldPhoto = null;
+
+  function renderSidebarProfile() {
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (sidebarUsername && u.username) {
+      sidebarUsername.textContent = u.username;
+    }
+    
+    if (profileBtn) {
+      if (u.avatar) {
+        profileBtn.innerHTML = `<img src="${u.avatar}" class="w-full h-full object-cover rounded-full"/>`;
+      } else {
+        profileBtn.innerHTML = '👤';
+      }
+    }
+  }
+
   function openProfile() {
     if (profileError) {
       profileError.classList.add('hidden');
@@ -715,31 +733,30 @@ if (printBtn) {
     if (profileFotoInput) profileFotoInput.value = '';
 
     const u = JSON.parse(localStorage.getItem('user') || '{}');
-    document.getElementById('profileId').textContent = u.id || '-';
-    document.getElementById('profileUsernameInput').value = u.username || '';
-    document.getElementById('profileEmailInput').value = u.email || '';
-    document.getElementById('profilePasswordInput').value = '';
+    
+    tempOldPhoto = u.avatar || null;
+    
+    const profileIdEl = document.getElementById('profileId');
+    const profileUsernameInputEl = document.getElementById('profileUsernameInput');
+    const profileEmailInputEl = document.getElementById('profileEmailInput');
+    const profilePasswordInputEl = document.getElementById('profilePasswordInput');
 
-    const avatarUrl = u.avatar || null;
-    const pImg = document.getElementById('profileAvatar');
-    const pPlaceholder = document.getElementById('profileAvatarPlaceholder');
+    if (profileIdEl) profileIdEl.textContent = u.id || '-';
+    if (profileUsernameInputEl) profileUsernameInputEl.value = u.username || '';
+    if (profileEmailInputEl) profileEmailInputEl.value = u.email || '';
+    if (profilePasswordInputEl) profilePasswordInputEl.value = '';
 
-    if (avatarUrl) {
-      if (pImg) {
-        pImg.src = avatarUrl;
-        pImg.classList.remove('hidden');
+    if (u.avatar) {
+      if (profileAvatar) {
+        profileAvatar.src = u.avatar;
+        profileAvatar.classList.remove('hidden');
       }
-      if (pPlaceholder) pPlaceholder.classList.add('hidden');
-
-      if (profileBtn) {
-        profileBtn.innerHTML = `
-          <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
-        `;
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
       }
     } else {
-      if (pImg) pImg.classList.add('hidden');
-      if (pPlaceholder) pPlaceholder.classList.remove('hidden');
-      if (profileBtn) profileBtn.innerHTML = '👤';
+      if (profileAvatar) profileAvatar.classList.add('hidden');
+      if (profilePlaceholder) profilePlaceholder.classList.remove('hidden');
     }
 
     if (profileModal) {
@@ -755,14 +772,48 @@ if (printBtn) {
       profileModal.classList.remove('flex');
       document.body.style.overflow = '';
     }
+    
+    if (profileFotoInput) profileFotoInput.value = '';
+    
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u.avatar) {
+      if (profileAvatar) {
+        profileAvatar.src = u.avatar;
+        profileAvatar.classList.remove('hidden');
+      }
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
+      }
+    } else {
+      if (profileAvatar) profileAvatar.classList.add('hidden');
+      if (profilePlaceholder) profilePlaceholder.classList.remove('hidden');
+    }
   }
 
-  profileBtn?.addEventListener('click', (e) => { e.preventDefault(); openProfile(); });
-  profileClose?.addEventListener('click', (e) => { e.preventDefault(); closeProfile(); });
-  profileCancel?.addEventListener('click', (e) => { e.preventDefault(); closeProfile(); });
-  profileModal?.addEventListener('click', (e) => { if (e.target === profileModal) closeProfile(); });
+  profileBtn?.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    openProfile(); 
+  });
+  
+  profileClose?.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    closeProfile(); 
+  });
+  
+  profileCancel?.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    closeProfile(); 
+  });
+  
+  profileModal?.addEventListener('click', (e) => { 
+    if (e.target === profileModal) closeProfile(); 
+  });
 
-  profileLogout?.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('user'); window.location.href = '../src/login.html'; });
+  profileLogout?.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    localStorage.removeItem('user'); 
+    window.location.href = '../src/login.html'; 
+  });
 
   profileSave?.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -771,14 +822,14 @@ if (printBtn) {
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const id = currentUser.id;
 
-    const usernameVal = document.getElementById('profileUsernameInput').value.trim();
-    const emailVal = document.getElementById('profileEmailInput').value.trim();
-    const passwordVal = document.getElementById('profilePasswordInput').value;
-    const newFoto = document.getElementById('profileFotoInput').files[0];
+    const usernameVal = document.getElementById('profileUsernameInput')?.value.trim() || '';
+    const emailVal = document.getElementById('profileEmailInput')?.value.trim() || '';
+    const passwordVal = document.getElementById('profilePasswordInput')?.value || '';
+    const newFoto = profileFotoInput?.files[0];
 
     if (!id) {
       if (profileError) {
-        profileError.textContent = 'Error: User ID tidak ditemukan di penyimpanan lokal. Silakan coba login ulang.';
+        profileError.textContent = 'Error: User ID tidak ditemukan. Silakan login ulang.';
         profileError.classList.remove('hidden');
       }
       return;
@@ -805,60 +856,66 @@ if (printBtn) {
     profileSaveBtn.textContent = 'Saving...';
 
     try {
-      const res = await fetch(`${API}/login/profile`, {
+      const res = await fetch(`${window.location.origin}/login/profile`, {
         method: 'PATCH',
         body: fd
       });
-      const data = await res.json();
-      if (!res.ok) {
-        if (profileError) {
-          profileError.textContent = data.message || 'Gagal memperbarui profile.';
-          profileError.classList.remove('hidden');
-        }
-        return;
-      }
-      localStorage.setItem('user', JSON.stringify(data.user));
-      const sb = document.getElementById('sidebarUsername');
-      if (sb) sb.textContent = data.user.username;
-      
-      const avatarUrl = data.user.avatar;
 
-      if (profileBtn) {
-        if (avatarUrl) {
-          profileBtn.innerHTML = `
-            <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
-          `;
-          if (pImg && pPlaceholder) {
-            pImg.src = avatarUrl;
-            pImg.classList.remove('hidden');
-            pPlaceholder.classList.add('hidden');
-          }
-          if (profileAvatar) {
-            profileAvatar.src = avatarUrl;
-            profileAvatar.classList.remove('hidden');
-          }
-          if (profilePlaceholder) {
-            profilePlaceholder.classList.add('hidden');
-          }
-        } else {
-          profileBtn.innerHTML = '👤';
+      const contentType = res.headers.get("content-type");
+      let data;
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        
+        const updatedUser = {
+          ...currentUser,
+          username: usernameVal,
+          email: emailVal,
+        };
+
+        if (profileAvatar && !profileAvatar.classList.contains("hidden")) {
+          updatedUser.avatar = profileAvatar.src;
         }
+
+        data = { user: updatedUser };
       }
+
+      if (!res.ok && data?.message) {
+        throw new Error(data.message);
+      }
+
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      alert('Profil berhasil diperbarui!');
+      renderSidebarProfile();
+      
+      profileSaveBtn.disabled = false;
+      profileSaveBtn.textContent = prevText;
+      
       closeProfile();
-    } finally {
+      
+    } catch (err) {
+      if (profileError) {
+        profileError.textContent = err.message || 'Gagal memperbarui profile.';
+        profileError.classList.remove('hidden');
+      }
       profileSaveBtn.disabled = false;
       profileSaveBtn.textContent = prevText;
     }
   });
 
-  profileAvatarContainer?.addEventListener('click', () => {
+  profileAvatarContainer?.addEventListener('click', (e) => {
+    if (e.target.tagName === 'svg' || e.target.tagName === 'path') return;
     profileFotoInput?.click();
   });
 
   profileFotoInput?.addEventListener('change', function () {
-    if (this.files && this.files[0]) {
+  });
+
+  const pangkasSimpan = document.getElementById('pangkasSimpan');
+  pangkasSimpan?.addEventListener('click', () => {
+    if (profileFotoInput?.files && profileFotoInput.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
@@ -869,20 +926,28 @@ if (printBtn) {
           profilePlaceholder.classList.add('hidden');
         }
       };
-      reader.readAsDataURL(this.files[0]);
+      reader.readAsDataURL(profileFotoInput.files[0]);
     }
   });
 
-  (function() {
-    const u = JSON.parse(localStorage.getItem('user') || '{}');
-    const profileBtn = document.getElementById('profileBtn');
-    if (profileBtn && u.avatar) {
-      const avatarUrl = u.avatar;
-        profileBtn.innerHTML = `
-          <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
-        `;
+  const pangkasBatal = document.getElementById('pangkasBatal');
+  pangkasBatal?.addEventListener('click', () => {
+    if (profileFotoInput) profileFotoInput.value = '';
+        if (tempOldPhoto) {
+      if (profileAvatar) {
+        profileAvatar.src = tempOldPhoto;
+        profileAvatar.classList.remove('hidden');
+      }
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
+      }
+    } else {
+      if (profileAvatar) profileAvatar.classList.add('hidden');
+      if (profilePlaceholder) profilePlaceholder.classList.remove('hidden');
     }
-  })();
+  });
+
+  renderSidebarProfile();
 })();
 
 document.addEventListener('DOMContentLoaded', function() {

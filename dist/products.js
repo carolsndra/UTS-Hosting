@@ -15,7 +15,11 @@ const fmt = new Intl.NumberFormat("id-ID", {
 function resolveImg(p) {
   const fallback =
     "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4e6.svg";
-  return p?.foto || fallback;
+
+  if (!p?.foto || !p.foto.startsWith("http")) {
+    return fallback;
+  }
+  return p.foto;
 }
 
 function card(p) {
@@ -62,7 +66,10 @@ function card(p) {
 }
 
 function render(list) {
-  grid.innerHTML = list.map(card).join("");
+  if (!grid) return;
+  grid.innerHTML = list.length > 0 
+    ? list.map(card).join("") 
+    : '<div class="col-span-full text-center text-gray-500 py-12">Tidak ada produk ditemukan</div>';
 }
 
 function applySearch() {
@@ -87,18 +94,37 @@ function applySearch() {
 }
 
 async function reloadProducts() {
+  if (!grid) return;
+  
   try {
+    grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-12">Loading...</div>';
+    
     const res = await fetch(`${API}/items`);
-    if (!res.ok) throw new Error("Gagal ambil produk");
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+    
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Server tidak mengembalikan JSON");
+    }
+    
     const data = await res.json();
     PRODUCTS = data.items || [];
     applySearch();
   } catch (err) {
-    console.error(err);
-    grid.innerHTML =
-      `<div class="col-span-full text-center text-red-500">
-        Gagal memuat produk
-      </div>`;
+    if (grid) {
+      grid.innerHTML = `
+        <div class="col-span-full text-center text-red-500 py-12">
+          <p class="font-bold mb-2">Gagal memuat produk</p>
+          <p class="text-sm">${err.message}</p>
+          <button onclick="reloadProducts()" class="mt-4 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600">
+            Coba Lagi
+          </button>
+        </div>
+      `;
+    }
   }
 }
 
@@ -109,41 +135,50 @@ function editProduct(id) {
 
 async function deleteProduct(id) {
   if (!confirm("Yakin mau hapus produk ini?")) return;
+  
   try {
     const res = await fetch(`${API}/items/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error("Gagal hapus produk");
+    
+    const contentType = res.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Gagal hapus produk");
+      }
+    } else {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+    }
+    
     await reloadProducts();
+    alert("Produk berhasil dihapus!");
   } catch (err) {
-    alert(err.message);
+    alert("Gagal menghapus produk: " + err.message);
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  reloadProducts();
-
-  search?.addEventListener("input", applySearch);
-
-  chipsContainer?.addEventListener("click", (e) => {
-    const btn = e.target.closest(".chip");
-    if (!btn) return;
-    const val = btn.dataset.value;
-    btn.classList.toggle("selected");
-    SELECTED_CATEGORIES.has(val)
-      ? SELECTED_CATEGORIES.delete(val)
-      : SELECTED_CATEGORIES.add(val);
-    applySearch();
-  });
-});
-
-(function () {
+function renderSidebarProfile() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   const sidebarUsername = document.getElementById("sidebarUsername");
+  const profileBtn = document.getElementById("profileBtn");
+
   if (sidebarUsername && user.username) {
     sidebarUsername.textContent = user.username;
   }
-})();
 
-(function () {
+  if (profileBtn) {
+    if (user.avatar) {
+      profileBtn.innerHTML = `<img src="${user.avatar}" class="w-full h-full object-cover rounded-full"/>`;
+    } else {
+      profileBtn.innerHTML = "👤";
+    }
+  }
+}
+
+function highlightActivePage() {
   const currentPage = location.pathname.split("/").pop();
   document.querySelectorAll("aside nav a").forEach((link) => {
     link.classList.toggle(
@@ -151,37 +186,201 @@ document.addEventListener("DOMContentLoaded", () => {
       link.getAttribute("href") === currentPage
     );
   });
-})();
+}
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  reloadProducts();
+  renderSidebarProfile();
+  highlightActivePage();
+
+  if (search) {
+    search.addEventListener("input", applySearch);
+  }
+
+  if (chipsContainer) {
+    chipsContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      const val = btn.dataset.value;
+      btn.classList.toggle("selected");
+      SELECTED_CATEGORIES.has(val)
+        ? SELECTED_CATEGORIES.delete(val)
+        : SELECTED_CATEGORIES.add(val);
+      applySearch();
+    });
+  }
+
   const btn = document.getElementById("mobileMenuBtn");
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("mobileOverlay");
 
-  if (!btn || !sidebar || !overlay) return;
+  if (btn && sidebar && overlay) {
+    const open = () => {
+      sidebar.classList.add("mobile-open");
+      overlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+    };
 
-  const open = () => {
-    sidebar.classList.add("mobile-open");
-    overlay.classList.add("active");
-    document.body.style.overflow = "hidden";
-  };
+    const close = () => {
+      sidebar.classList.remove("mobile-open");
+      overlay.classList.remove("active");
+      document.body.style.overflow = "";
+    };
 
-  const close = () => {
-    sidebar.classList.remove("mobile-open");
-    overlay.classList.remove("active");
-    document.body.style.overflow = "";
-  };
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      sidebar.classList.contains("mobile-open") ? close() : open();
+    });
 
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    sidebar.classList.contains("mobile-open") ? close() : open();
-  });
+    overlay.addEventListener("click", close);
+  }
 
-  overlay.addEventListener("click", close);
-});
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("user");
+      window.location.href = "../src/login.html";
+    });
+  }
 
-document.getElementById("logoutBtn")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  localStorage.removeItem("user");
-  window.location.href = "../src/login.html";
+  const profileBtn = document.getElementById("profileBtn");
+  const profileModal = document.getElementById("profileModal");
+  const profileClose = document.getElementById("profileClose");
+  const profileCancel = document.getElementById("profileCancel");
+  const profileSave = document.getElementById("profileSave");
+  const profileLogout = document.getElementById("profileLogout");
+
+  const profileId = document.getElementById("profileId");
+  const usernameInput = document.getElementById("profileUsernameInput");
+  const emailInput = document.getElementById("profileEmailInput");
+  const passwordInput = document.getElementById("profilePasswordInput");
+  const avatarImg = document.getElementById("profileAvatar");
+  const avatarPlaceholder = document.getElementById("profileAvatarPlaceholder");
+  const avatarContainer = document.getElementById("profileAvatarContainer");
+  const fotoInput = document.getElementById("profileFotoInput");
+
+  if (profileBtn && profileModal) {
+    // Trigger file input when clicking avatar container
+    if (avatarContainer) {
+      avatarContainer.addEventListener("click", (e) => {
+        // Prevent triggering when clicking the overlay icon
+        if (e.target.tagName === 'svg' || e.target.tagName === 'path') return;
+        fotoInput?.click();
+      });
+    }
+
+    // Open profile modal
+    profileBtn.addEventListener("click", () => {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (profileId) profileId.textContent = user.id || "-";
+      if (usernameInput) usernameInput.value = user.username || "";
+      if (emailInput) emailInput.value = user.email || "";
+      if (passwordInput) passwordInput.value = "";
+
+      if (user.avatar && avatarImg && avatarPlaceholder) {
+        avatarImg.src = user.avatar;
+        avatarImg.classList.remove("hidden");
+        avatarPlaceholder.classList.add("hidden");
+      } else if (avatarImg && avatarPlaceholder) {
+        avatarImg.classList.add("hidden");
+        avatarPlaceholder.classList.remove("hidden");
+      }
+
+      profileModal.classList.remove("hidden");
+      profileModal.classList.add("flex");
+      document.body.style.overflow = "hidden";
+    });
+
+    // Close profile modal
+    const closeProfile = () => {
+      profileModal.classList.add("hidden");
+      profileModal.classList.remove("flex");
+      document.body.style.overflow = "";
+    };
+
+    if (profileClose) {
+      profileClose.addEventListener("click", closeProfile);
+    }
+    
+    if (profileCancel) {
+      profileCancel.addEventListener("click", closeProfile);
+    }
+    
+    profileModal.addEventListener("click", (e) => {
+      if (e.target === profileModal) closeProfile();
+    });
+
+    // Logout from profile modal
+    if (profileLogout) {
+      profileLogout.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("user");
+        window.location.href = "../src/login.html";
+      });
+    }
+
+    // Save profile
+    if (profileSave) {
+      profileSave.addEventListener("click", async (e) => {
+        e.preventDefault();
+        
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+        const fd = new FormData();
+        fd.append("id", user.id);
+        fd.append("username", usernameInput.value.trim());
+        fd.append("email", emailInput.value.trim());
+
+        if (passwordInput.value.trim()) {
+          fd.append("password", passwordInput.value);
+        }
+
+        if (fotoInput && fotoInput.files && fotoInput.files[0]) {
+          fd.append("foto", fotoInput.files[0]);
+        }
+
+        try {
+          const res = await fetch(`${API}/login/profile`, {
+            method: "PATCH",
+            body: fd,
+          });
+
+          const contentType = res.headers.get("content-type");
+          let data;
+          
+          if (contentType && contentType.includes("application/json")) {
+            data = await res.json();
+          } else {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            
+            const updatedUser = {
+              ...user,
+              username: usernameInput.value.trim(),
+              email: emailInput.value.trim()
+            };
+            
+            if (avatarImg && !avatarImg.classList.contains('hidden')) {
+              updatedUser.avatar = avatarImg.src;
+            }
+            
+            data = { user: updatedUser };
+          }
+          
+          if (!res.ok && data?.message) {
+            throw new Error(data.message);
+          }
+
+          localStorage.setItem("user", JSON.stringify(data.user));
+          renderSidebarProfile();
+
+          closeProfile();
+        } catch (err) {
+          alert("Gagal update profil: " + err.message);
+        }
+      });
+    }
+  }
 });

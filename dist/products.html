@@ -265,7 +265,11 @@
 
   <div class="flex min-h-screen relative">
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 bg-pink-100/90 shadow-lg flex flex-col no-print z-10">
+    <aside
+      id="sidebar"
+      class="w-64 bg-pink-100/90 shadow-lg flex flex-col no-print
+        fixed top-0 left-0 h-screen z-30
+        -translate-x-full lg:translate-x-0 transition-transform duration-300">
       <div class="p-6 flex items-center justify-between">
         <div class="flex flex-col">
           <div id="sidebarUsername" class="text-2xl font-bold text-pink-600">Loading...</div>
@@ -300,8 +304,9 @@
     </aside>
 
     <!-- Main Content -->
-      <main class="flex-1 p-6 bg-overlay rounded-2xl shadow-md border border-pink-200 m-6"
-            style="position: relative;">
+      <main
+        class="flex-1 p-6 bg-overlay rounded-2xl shadow-md border border-pink-200
+              ml-64 mr-6 my-6">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <div class="header-box">

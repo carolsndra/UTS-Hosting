@@ -34,6 +34,10 @@ app.use("/src", express.static(path.join(__dirname, "../src")));
 
 // Static files untuk halaman dashboard dan asset di dist
 app.use("/dist", express.static(path.join(__dirname, "../dist")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
 
 /* ---------- Routes ---------- */
 app.use("/login", authRoutes);

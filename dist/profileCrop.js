@@ -24,6 +24,7 @@
       }
     }
     
+    let croppedImageBlob = null;
     let originalImageFile = null;
     let cropImageElement = null;
     let cropScale = 1;

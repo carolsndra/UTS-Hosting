@@ -1,3 +1,5 @@
+const API = window.location.origin;
+
 window.addEventListener("DOMContentLoaded", async () => {
   const elItem  = document.getElementById("totalItem");
   const elStok  = document.getElementById("totalStok");
@@ -17,8 +19,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   const addSupplierError   = document.getElementById("addSupplierError");
   const cancelAddSupplier  = document.getElementById("cancelAddSupplier");
 
-
-const API = window.location.origin; 
   const rupiah = (n) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -972,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.readAsDataURL(this.files[0]);
     }
   });
-  
+
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');

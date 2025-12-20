@@ -1,129 +1,259 @@
-const API = window.location.origin; 
-
 document.addEventListener("DOMContentLoaded", () => {
-  const form          = document.getElementById("addProductForm");
-  const supplierSelect = document.getElementById("supplier");
+  console.log("✅ out.js loaded"); 
 
-  async function loadSuppliers() {
-    if (!supplierSelect) return;
-    supplierSelect.innerHTML = `<option value="">Memuat daftar supplier...</option>`;
+const API = window.location.origin; 
+  const rowsContainer = document.getElementById("rows");
+  const errorEl = document.getElementById("outError");
+  const sidebarUsername = document.getElementById("sidebarUsername");
+  const btnAddRow = document.getElementById("btnAddRow");
+  const btnSubmit = document.getElementById("btnSubmit");
 
-    try {
-      const res = await fetch(`${API}/suppliers`, {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) throw new Error("Gagal mengambil data supplier");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (user.username) {
+    document.title = user.username + " Stock Out";
+    if (sidebarUsername) sidebarUsername.textContent = user.username;
+  }
 
-      const data = await res.json();
-      const suppliers = data.suppliers || data || [];
+  document.getElementById("logoutBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("user");
+    window.location.href = "../src/login.html";
+  });
 
-      supplierSelect.innerHTML = `<option value="">Pilih supplier</option>`;
-      suppliers.forEach((sup) => {
-        const opt = document.createElement("option");
-        opt.value = sup.supid; 
-        opt.textContent =
-          sup.namaSupplier || sup.nama_supplier || sup.supid;
-        supplierSelect.appendChild(opt);
-      });
+  const currentPage = location.pathname.split("/").pop();
+  document.querySelectorAll("aside nav a").forEach((link) => {
+    const href = link.getAttribute("href");
+    if ((currentPage === 'in.html' || currentPage === 'out.html') && href === 'transaction.html') {
+      link.classList.add("bg-pink-400", "text-white", "shadow");
+      link.classList.remove("text-gray-800");
+    } else if (href === currentPage) {
+      link.classList.add("bg-pink-400", "text-white", "shadow");
+      link.classList.remove("text-gray-800");
+    } else {
+      link.classList.remove("bg-pink-400", "text-white", "shadow");
+      link.classList.add("text-gray-800");
+    }
+  });
 
-      if (suppliers.length === 0) {
-        supplierSelect.innerHTML =
-          `<option value="">Belum ada supplier, tambahkan dulu di Dashboard</option>`;
+  async function getJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status + " " + res.statusText);
+    return res.json();
+  }
+
+  let cachedItems = [];
+  let itemsById = {};
+  let suppliersById = {};
+
+  function rowTemplate() {
+    return `
+      <div class="tx-row bg-white/80 rounded-xl shadow border border-pink-100 p-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-sm text-gray-500">Barang</label>
+          <select class="input item-select" required>
+            <option value="">Pilih barang…</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-gray-500">Qty</label>
+          <input type="number" min="1" class="input qty-input" placeholder="0" required>
+        </div>
+        <div>
+          <label class="text-sm text-gray-500">Supplier</label>
+          <div class="input bg-gray-100 cursor-not-allowed flex items-center text-sm">
+            <span class="supplier-name text-gray-700">-</span>
+          </div>
+          <input type="hidden" class="supplier-id-input" value="">
+        </div>
+        <div>
+          <label class="text-sm text-gray-500">Catatan</label>
+          <input type="text" class="input note-input" placeholder="opsional" autocomplete="off" tabindex="0">
+        </div>
+      </div>
+    `;
+  }
+
+  function updateSupplierForRow(rowEl, itemId) {
+    const nameEl = rowEl.querySelector('.supplier-name');
+    const idInput = rowEl.querySelector('.supplier-id-input');
+
+    let supplierName = '-';
+    let supplierId = '';
+
+    if (itemId && itemsById[itemId]) {
+      const prod = itemsById[itemId];
+      const supid = prod.supid || prod.supplier_id || prod.supplierId;
+
+      if (supid) {
+        supplierId = supid;
+        if (suppliersById[supid]) {
+          supplierName = suppliersById[supid];
+        } else {
+          supplierName = supid;
+        }
       }
-    } catch (err) {
-      console.error("Error loading suppliers:", err);
-      supplierSelect.innerHTML =
-        `<option value="">Gagal memuat supplier</option>`;
+    }
+
+    if (nameEl) nameEl.textContent = supplierName;
+    if (idInput) idInput.value = supplierId;
+  }
+
+  async function hydrate(rowEl) {
+    const itemSel = rowEl.querySelector(".item-select");
+    if (!itemSel) return;
+
+    itemSel.innerHTML =
+      '<option value="">Pilih barang…</option>' +
+      cachedItems
+        .map((it) => {
+          const id = it.id || it.itemId || it._id;
+          const name = it.namaItem || it.name || it.nama || "-";
+          return `<option value="${id}">${name}</option>`;
+        })
+        .join("");
+
+    itemSel.addEventListener('change', (e) => {
+      const rowEl = e.target.closest('.tx-row');
+      const itemId = e.target.value;
+      if (rowEl) updateSupplierForRow(rowEl, itemId);
+    });
+  }
+
+  async function addRow() {
+    rowsContainer.insertAdjacentHTML("beforeend", rowTemplate());
+    const rowEl = rowsContainer.lastElementChild;
+    await hydrate(rowEl);
+    
+    const noteInput = rowEl.querySelector('.note-input');
+    if (noteInput) {
+      noteInput.removeAttribute('disabled');
+      noteInput.removeAttribute('readonly');
+      noteInput.removeAttribute('tabindex');
+      noteInput.style.pointerEvents = 'auto';
+      noteInput.style.cursor = 'text';
+      noteInput.style.opacity = '1';
+      noteInput.style.background = '';
+      
+      noteInput.addEventListener('focus', function() {
+        this.style.outline = '2px solid #ec4899';
+      });
+      noteInput.addEventListener('blur', function() {
+        this.style.outline = '';
+      });
+      
+      noteInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+        this.focus();
+      });
     }
   }
 
-  loadSuppliers();
-  if (!form) return; 
+  (async function initItems() {
+    try {
+      const itemsRes = await getJSON(`${API}/items`);
+      const items = itemsRes.items || itemsRes || [];
+      cachedItems = items;
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const namaItem    = document.getElementById("namaBarang").value.trim();
-    const keterangan  = document.getElementById("keterangan").value.trim();
-    const hargaSatuan = document.getElementById("hargaSatuan").value.trim();
-    const stok        = document.getElementById("stok").value.trim();
-    const kategoriEl  = document.getElementById("kategori");
-    const supplierEl  = document.getElementById("supplier");
-    const fotoInput   = document.getElementById("fotoInput");
-
-    const kategori = kategoriEl?.value.trim() || "";
-    const supplier = supplierEl?.value.trim() || "";
-    const foto     = fotoInput && fotoInput.files[0] ? fotoInput.files[0] : null;
-
-    const fd = new FormData();
-    fd.append("namaItem", namaItem);
-    fd.append("keterangan", keterangan);
-    fd.append("hargaSatuan", hargaSatuan);
-    fd.append("stok", stok);
-    fd.append("catid", kategori);
-    fd.append("supid", supplier);
-    if (foto) fd.append("foto", foto);
-
-    const btn = form.querySelector('button[type="submit"]') || form.querySelector("button");
-    let prevText = "";
-    if (btn) {
-      btn.disabled = true;
-      prevText = btn.textContent;
-      btn.textContent = "Uploading...";
+      itemsById = {};
+      items.forEach(it => {
+        const id = it.id || it.itemId || it._id;
+        if (id) itemsById[id] = it;
+      });
+    } catch (e) {
+      console.error(e);
+      cachedItems = [];
     }
 
     try {
-      const res = await fetch(`${API}/items`, {
-        method: "POST",
-        body: fd,
+      const supRes = await getJSON(`${API}/suppliers`);
+      const suppliers = supRes.suppliers || supRes || [];
+      suppliersById = {};
+      suppliers.forEach(s => {
+        const id = s.supid || s.id || s.kode || s.code;
+        if (!id) return;
+        const name = s.namaSupplier || s.nama || s.name || id;
+        suppliersById[id] = name;
+      });
+    } catch (e) {
+      console.error(e);
+      suppliersById = {};
+    }
+
+    addRow();
+  })();
+
+  btnAddRow?.addEventListener("click", addRow);
+
+  document.getElementById("btnSubmit")?.addEventListener("click", async () => {
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    const payload = [];
+    let hasIncompleteRow = false;
+
+    rowsContainer.querySelectorAll('.tx-row').forEach((row) => {
+      const itemId = row.querySelector('.item-select')?.value?.trim();
+      const qtyInput = row.querySelector('.qty-input')?.value?.trim();
+      const qty = Number(qtyInput) || 0;
+      const noteInput = row.querySelector('.note-input');
+      const note = noteInput ? (noteInput.value || '').trim() : '';
+
+      const hasItemId = itemId && itemId !== '';
+      const hasQty = qty > 0;
+
+      if (hasItemId && !hasQty) {
+        hasIncompleteRow = true;
+      } else if (!hasItemId && hasQty) {
+        hasIncompleteRow = true;
+      }
+
+      if (hasItemId && hasQty) {
+        payload.push({ itemId, qty, note });
+      }
+    });
+
+    if (hasIncompleteRow) {
+      errorEl.textContent = 'Semua kolom harus diisi, catatan opsional.';
+      return;
+    }
+
+    if (payload.length === 0) {
+      errorEl.textContent = 'Semua kolom harus diisi, catatan opsional.';
+      return;
+    }
+
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const user_id = user.id || null;
+
+      if (!user_id) {
+        errorEl.textContent = 'User ID tidak ditemukan. Silakan login ulang.';
+        return;
+      }
+
+      const res = await fetch(`${API}/transactions/out`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          rows: payload,
+          user_id: user_id
+        })
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        let errMsg = `Gagal menambah produk (status ${res.status})`;
-        try {
-          const err = await res.json();
-          if (err && err.message) errMsg = err.message;
-        } catch (_) {}
-        throw new Error(errMsg);
+        throw new Error(data.message || res.status + ' ' + res.statusText);
       }
 
-      alert("Produk berhasil ditambahkan!");
-      window.location.href = "products.html";
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Terjadi kesalahan koneksi.");
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = prevText || "ADD";
-      }
+      alert('Transaksi OUT berhasil.');
+      location.href = 'transaction.html';
+    } catch (e) {
+      errorEl.textContent = 'Gagal submit: ' + (e.message || 'error');
+      console.error('Error:', e);
     }
   });
 });
 
-(function() {
-  const userTitle = JSON.parse(localStorage.getItem('user') || '{}');
-  if (userTitle.username) document.title = userTitle.username + ' Add Product';
-
-  const fotoInput = document.getElementById('fotoInput');
-  const photoBox  = document.getElementById('photoBox');
-  if (fotoInput && photoBox) {
-    fotoInput.addEventListener('change', function () {
-      if (this.files && this.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          photoBox.innerHTML =
-            '<img src="' + e.target.result + '" alt="Preview" class="w-full h-full object-cover rounded-2xl"/>';
-        };
-        reader.readAsDataURL(this.files[0]);
-      } else {
-        photoBox.textContent = 'foto.';
-      }
-    });
-  }
-})();
-
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
   const profileClose = document.getElementById('profileClose');
@@ -154,6 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (profileEmailInputEl) profileEmailInputEl.value = u.email || '';
     if (profilePasswordInputEl) profilePasswordInputEl.value = '';
 
+    
     const avatarUrl = u.avatar || null;
     const pImg = document.getElementById('profileAvatar');
     const pPlaceholder = document.getElementById('profileAvatarPlaceholder');
@@ -169,6 +300,18 @@ document.addEventListener("DOMContentLoaded", () => {
         profileBtn.innerHTML = `
           <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
         `;
+      }
+      if (pImg && pPlaceholder) {
+            pImg.src = avatarUrl;
+            pImg.classList.remove('hidden');
+            pPlaceholder.classList.add('hidden');
+          }
+      if (profileAvatar) {
+        profileAvatar.src = avatarUrl;
+        profileAvatar.classList.remove('hidden');
+      }
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
       }
     } else {
       if (pImg) pImg.classList.add('hidden');
@@ -267,13 +410,6 @@ document.addEventListener("DOMContentLoaded", () => {
             pImg.classList.remove('hidden');
             pPlaceholder.classList.add('hidden');
           }
-          if (profileAvatar) {
-            profileAvatar.src = avatarUrl;
-            profileAvatar.classList.remove('hidden');
-          }
-          if (profilePlaceholder) {
-            profilePlaceholder.classList.add('hidden');
-          }
         } else {
           profileBtn.innerHTML = '👤';
         }
@@ -317,25 +453,6 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
   })();
-})();
-
-(function() {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const sidebarUsername = document.getElementById('sidebarUsername');
-  if (sidebarUsername && user.username) sidebarUsername.textContent = user.username;
-
-  document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    localStorage.removeItem('user');
-    window.location.href = '../src/login.html';
-  });
-
-  const currentPage = location.pathname.split("/").pop();
-  document.querySelectorAll("aside nav a").forEach(link => {
-    const href = link.getAttribute("href");
-    if (href === currentPage) link.classList.add("bg-pink-400","text-white","shadow");
-    else link.classList.remove("bg-pink-400","text-white","shadow");
-  });
 })();
 
 document.addEventListener('DOMContentLoaded', function() {

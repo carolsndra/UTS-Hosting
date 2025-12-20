@@ -1,0 +1,6 @@
+# === Environment & Config Files ===
+node_modules
+.env
+
+# === SSL / Security Certificates ===
+ca.pem

@@ -707,6 +707,8 @@ if (printBtn) {
   const profileAvatarContainer = document.getElementById('profileAvatarContainer');
   const profilePlaceholder = document.getElementById('profileAvatarPlaceholder');
 
+  let tempOldPhoto = null;
+
   function renderSidebarProfile() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -731,6 +733,9 @@ if (printBtn) {
     if (profileFotoInput) profileFotoInput.value = '';
 
     const u = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    tempOldPhoto = u.avatar || null;
+    
     const profileIdEl = document.getElementById('profileId');
     const profileUsernameInputEl = document.getElementById('profileUsernameInput');
     const profileEmailInputEl = document.getElementById('profileEmailInput');
@@ -766,6 +771,22 @@ if (printBtn) {
       profileModal.classList.add('hidden');
       profileModal.classList.remove('flex');
       document.body.style.overflow = '';
+    }
+    
+    if (profileFotoInput) profileFotoInput.value = '';
+    
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u.avatar) {
+      if (profileAvatar) {
+        profileAvatar.src = u.avatar;
+        profileAvatar.classList.remove('hidden');
+      }
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
+      }
+    } else {
+      if (profileAvatar) profileAvatar.classList.add('hidden');
+      if (profilePlaceholder) profilePlaceholder.classList.remove('hidden');
     }
   }
 
@@ -866,6 +887,7 @@ if (printBtn) {
       }
 
       localStorage.setItem('user', JSON.stringify(data.user));
+      
       renderSidebarProfile();
       
       profileSaveBtn.disabled = false;
@@ -878,7 +900,6 @@ if (printBtn) {
         profileError.textContent = err.message || 'Gagal memperbarui profile.';
         profileError.classList.remove('hidden');
       }
-
       profileSaveBtn.disabled = false;
       profileSaveBtn.textContent = prevText;
     }
@@ -890,7 +911,11 @@ if (printBtn) {
   });
 
   profileFotoInput?.addEventListener('change', function () {
-    if (this.files && this.files[0]) {
+  });
+
+  const pangkasSimpan = document.getElementById('pangkasSimpan');
+  pangkasSimpan?.addEventListener('click', () => {
+    if (profileFotoInput?.files && profileFotoInput.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
@@ -901,7 +926,24 @@ if (printBtn) {
           profilePlaceholder.classList.add('hidden');
         }
       };
-      reader.readAsDataURL(this.files[0]);
+      reader.readAsDataURL(profileFotoInput.files[0]);
+    }
+  });
+
+  const pangkasBatal = document.getElementById('pangkasBatal');
+  pangkasBatal?.addEventListener('click', () => {
+    if (profileFotoInput) profileFotoInput.value = '';
+        if (tempOldPhoto) {
+      if (profileAvatar) {
+        profileAvatar.src = tempOldPhoto;
+        profileAvatar.classList.remove('hidden');
+      }
+      if (profilePlaceholder) {
+        profilePlaceholder.classList.add('hidden');
+      }
+    } else {
+      if (profileAvatar) profileAvatar.classList.add('hidden');
+      if (profilePlaceholder) profilePlaceholder.classList.remove('hidden');
     }
   });
 

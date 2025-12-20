@@ -79,7 +79,6 @@ filterIn?.addEventListener('click', () => {
     b.classList.remove('bg-blue-600','bg-red-600','text-white');
     b.classList.add('bg-white/50','border','border-gray-200');
   });
-  // active blue Masuk
   filterIn.classList.remove('bg-white/50');
   filterIn.classList.remove('border');
   filterIn.classList.remove('border-gray-200');
@@ -93,7 +92,6 @@ filterOut?.addEventListener('click', () => {
     b.classList.remove('bg-blue-600','bg-red-600','text-white');
     b.classList.add('bg-white/50','border','border-gray-200');
   });
-  // active red Keluar
   filterOut.classList.remove('bg-white/50');
   filterOut.classList.remove('border');
   filterOut.classList.remove('border-gray-200');

@@ -1,6 +1,5 @@
 const API = window.location.origin;
 
-// ========== SUPPLIERS & FORM SUBMISSION ==========
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("addProductForm");
   const supplierSelect = document.getElementById("supplier");
@@ -102,7 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Photo preview for product
   const fotoInput = document.getElementById("fotoInput");
   const photoBox = document.getElementById("photoBox");
   if (fotoInput && photoBox) {
@@ -120,7 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ========== SIDEBAR & USER INFO ==========
 function renderSidebarProfile() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const sidebarUsername = document.getElementById("sidebarUsername");
@@ -152,7 +149,6 @@ function highlightActivePage() {
   });
 }
 
-// ========== PROFILE MODAL ==========
 document.addEventListener("DOMContentLoaded", () => {
   renderSidebarProfile();
   highlightActivePage();

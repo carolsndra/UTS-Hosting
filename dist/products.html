@@ -204,7 +204,7 @@
       position: fixed !important;
       top: 1rem;
       left: 1rem;
-      z-index: 10000 !important;
+      z-index: 10001 !important;
       background: rgba(255, 255, 255, 0.95);
       border: 1px solid rgba(236, 72, 153, 0.3);
       border-radius: 8px;
@@ -244,7 +244,7 @@
 
     .mobile-overlay.active {
       display: block !important;
-      z-index: 99 !important;
+      z-index: 90 !important;
       pointer-events: auto !important;
       opacity: 1;
       visibility: visible;
@@ -267,9 +267,8 @@
     <!-- Sidebar -->
     <aside
       id="sidebar"
-      class="w-64 bg-pink-100/90 shadow-lg flex flex-col no-print
-        fixed top-0 left-0 h-screen z-30
-        -translate-x-full lg:translate-x-0 transition-transform duration-300">
+      class="w-64 bg-pink-100/90 shadow-lg flex flex-col no-print z-40
+            fixed top-0 h-screen">
       <div class="p-6 flex items-center justify-between">
         <div class="flex flex-col">
           <div id="sidebarUsername" class="text-2xl font-bold text-pink-600">Loading...</div>
@@ -304,9 +303,9 @@
     </aside>
 
     <!-- Main Content -->
-      <main
-        class="flex-1 p-6 bg-overlay rounded-2xl shadow-md border border-pink-200
-              ml-64 mr-6 my-6">
+    <main class="flex-1 p-6 bg-overlay rounded-2xl shadow-md border border-pink-200
+            ml-0 lg:ml-64 mr-6 my-6">
+
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <div class="header-box">

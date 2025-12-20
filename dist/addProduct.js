@@ -4,11 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const form          = document.getElementById("addProductForm");
   const supplierSelect = document.getElementById("supplier");
 
-  // --- Load daftar supplier dari backend (supaya supplier baru ikut muncul) ---
   async function loadSuppliers() {
     if (!supplierSelect) return;
-
-    // sementara tampilkan status memuat
     supplierSelect.innerHTML = `<option value="">Memuat daftar supplier...</option>`;
 
     try {
@@ -20,17 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       const suppliers = data.suppliers || data || [];
 
-      // isi ulang options
       supplierSelect.innerHTML = `<option value="">Pilih supplier</option>`;
       suppliers.forEach((sup) => {
         const opt = document.createElement("option");
-        opt.value = sup.supid; // pakai supid dari database
+        opt.value = sup.supid; 
         opt.textContent =
           sup.namaSupplier || sup.nama_supplier || sup.supid;
         supplierSelect.appendChild(opt);
       });
 
-      // kalau tidak ada supplier sama sekali
       if (suppliers.length === 0) {
         supplierSelect.innerHTML =
           `<option value="">Belum ada supplier, tambahkan dulu di Dashboard</option>`;
@@ -42,11 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // panggil saat halaman Add Product dibuka
   loadSuppliers();
-
-  // --- Handler submit form (tetap seperti sebelumnya) ---
-  if (!form) return; // jaga-jaga kalau file ini kebaca di halaman lain
+  if (!form) return; 
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -109,7 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ====== Title/Auth/Photo Preview ======
 (function() {
   const userTitle = JSON.parse(localStorage.getItem('user') || '{}');
   if (userTitle.username) document.title = userTitle.username + ' Add Product';
@@ -132,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })();
 
-// ====== Profile Modal Logic (Shared) ======
 (function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
@@ -301,13 +291,12 @@ document.addEventListener("DOMContentLoaded", () => {
     profileFotoInput?.click();
   });
 
-  // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
   profileFotoInput?.addEventListener('change', function () {
     if (this.files && this.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.src = e.target.result; 
           profileAvatar.classList.remove('hidden');
         }
         if (profilePlaceholder) {
@@ -318,7 +307,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Load profile avatar on page load
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');
@@ -331,7 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
   })();
 })();
 
-// ====== Sidebar Username + Logout + Active Link ======
 (function() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const sidebarUsername = document.getElementById('sidebarUsername');
@@ -351,7 +338,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 })();
 
-// ====== Mobile Menu Functionality ======
 document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const sidebar = document.getElementById('sidebar');

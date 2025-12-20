@@ -1,7 +1,6 @@
 const API = window.location.origin; 
 
 const historyBody = document.getElementById('historyBody');
-// Filter buttons (History only uses All/In/Out)
 const filterAll = document.getElementById('filterAll');
 const filterIn = document.getElementById('filterIn');
 const filterOut = document.getElementById('filterOut');
@@ -30,7 +29,6 @@ function renderTransactions() {
     return;
   }
 
-  // TRANSACTIONS are sorted ascending by date from backend; compute running total stock
   let runningTotal = 0;
   const rows = TRANSACTIONS.map(tx => {
     const amount = Number(tx.amount || 0);
@@ -44,7 +42,6 @@ function renderTransactions() {
     };
   });
 
-  // newest first
   rows.reverse();
 
   historyBody.innerHTML = rows.map(row => `
@@ -62,16 +59,13 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]);
 }
 
-// Event listeners for type filters
 filterAll?.addEventListener('click', () => {
   CURRENT_TYPE_FILTER = '';
-  // reset styles
   [filterAll, filterIn, filterOut].forEach(b => {
     b.classList.remove('bg-blue-600','bg-red-600','text-white');
     b.classList.add('bg-white/50','border','border-gray-200');
     b.classList.remove('border-blue-500','border-red-500');
   });
-  // highlight Semua (neutral pink)
   filterAll.classList.remove('bg-white/50');
   filterAll.classList.remove('border');
   filterAll.classList.remove('border-gray-200');
@@ -85,7 +79,7 @@ filterIn?.addEventListener('click', () => {
     b.classList.remove('bg-blue-600','bg-red-600','text-white');
     b.classList.add('bg-white/50','border','border-gray-200');
   });
-  // active blue for Masuk
+  // active blue Masuk
   filterIn.classList.remove('bg-white/50');
   filterIn.classList.remove('border');
   filterIn.classList.remove('border-gray-200');
@@ -99,7 +93,7 @@ filterOut?.addEventListener('click', () => {
     b.classList.remove('bg-blue-600','bg-red-600','text-white');
     b.classList.add('bg-white/50','border','border-gray-200');
   });
-  // active red for Keluar
+  // active red Keluar
   filterOut.classList.remove('bg-white/50');
   filterOut.classList.remove('border');
   filterOut.classList.remove('border-gray-200');
@@ -108,15 +102,12 @@ filterOut?.addEventListener('click', () => {
 });
 refreshBtn?.addEventListener('click', (e) => { loadTransactions(); });
 
-// initial load
 loadTransactions();
-// set default active button (Semua)
 if (filterAll) {
   filterAll.classList.remove('bg-white/50','border','border-gray-200');
   filterAll.classList.add('bg-pink-500','text-white');
 }
 
-// --- Sidebar username and profile modal wiring (sync with login) ---
 const sidebarUsernameEl = document.getElementById('sidebarUsername');
 const profileBtn = document.getElementById('profileBtn');
 const profileModal = document.getElementById('profileModal');
@@ -127,7 +118,6 @@ function refreshSidebarUser() {
   const u = JSON.parse(localStorage.getItem('user') || '{}');
   if (sidebarUsernameEl && u.username) sidebarUsernameEl.textContent = u.username;
   if (u.username) document.title = `${u.username} History`;
-  // profile button avatar swap if needed
   if (profileBtn) {
     if (u.avatar) profileBtn.innerHTML = `<img src="${u.avatar}" class="w-full h-full object-cover rounded-full"/>`;
     else profileBtn.innerHTML = '👤';
@@ -151,7 +141,6 @@ profileBtn?.addEventListener('click', (e) => { e.preventDefault(); openProfileMo
 closeProfileModal?.addEventListener('click', (e) => { e.preventDefault(); closeProfile(); });
 profileModal?.addEventListener('click', (e) => { if (e.target === profileModal) closeProfile(); });
 
-// submit profile edit
 profileForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const u = JSON.parse(localStorage.getItem('user') || '{}');
@@ -167,7 +156,6 @@ profileForm?.addEventListener('submit', async (e) => {
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.message || 'Gagal update profile');
-    // update localStorage user
     const updated = Object.assign({}, u, { username: name, email });
     localStorage.setItem('user', JSON.stringify(updated));
     refreshSidebarUser();
@@ -179,5 +167,4 @@ profileForm?.addEventListener('submit', async (e) => {
   }
 });
 
-// refresh username on load
 refreshSidebarUser();

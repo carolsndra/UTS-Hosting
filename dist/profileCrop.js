@@ -1,11 +1,6 @@
-// Profile Crop Functionality - Shared across all pages
-// Usage: Include this script after profile modal HTML and before closing </script> tag
-const API = window.location.origin;
-   
 (function() {
   'use strict';
   
-  // Wait for DOM to be ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initCrop);
   } else {
@@ -19,10 +14,8 @@ const API = window.location.origin;
       return;
     }
     
-    // Check if crop modal already exists
     let cropModal = document.getElementById('cropModal');
     if (!cropModal) {
-      // Create crop modal
       createCropModal();
       cropModal = document.getElementById('cropModal');
       if (!cropModal) {
@@ -31,8 +24,6 @@ const API = window.location.origin;
       }
     }
     
-    // Initialize crop variables
-    let croppedImageBlob = null;
     let originalImageFile = null;
     let cropImageElement = null;
     let cropScale = 1;
@@ -44,7 +35,6 @@ const API = window.location.origin;
     let startCropX = 0;
     let startCropY = 0;
     
-    // Get elements after modal is created
     const cropImage = document.getElementById('cropImage');
     const cropContainer = document.getElementById('cropContainer');
     const cropClose = document.getElementById('cropClose');
@@ -85,7 +75,6 @@ const API = window.location.origin;
         return;
       }
       
-      // Ensure modal exists
       let currentModal = document.getElementById('cropModal');
       if (!currentModal) {
         console.log('Crop modal not found, creating it...');
@@ -106,7 +95,6 @@ const API = window.location.origin;
         img.onload = () => {
           cropImageElement = img;
           
-          // Pastikan elemen sudah ada
           const currentCropImage = document.getElementById('cropImage');
           const currentCropContainer = document.getElementById('cropContainer');
           const currentModal = document.getElementById('cropModal');
@@ -124,14 +112,11 @@ const API = window.location.origin;
             return;
           }
           
-          // Show modal first so container can be measured
           currentModal.classList.remove('hidden');
           currentModal.classList.add('flex');
           currentModal.style.display = 'flex';
           
-          // Wait a bit for container to be rendered and visible
           setTimeout(() => {
-            // Re-get elements in case they changed
             const currentCropImage = document.getElementById('cropImage');
             const currentCropContainer = document.getElementById('cropContainer');
             
@@ -140,25 +125,20 @@ const API = window.location.origin;
               return;
             }
             
-            // Calculate initial scale to fit image in circular container
             const containerSize = currentCropContainer.offsetWidth || currentCropContainer.clientWidth || 300;
             const imgAspect = img.width / img.height;
-            const containerAspect = 1; // circular = 1:1
-            
-            // Calculate scale to cover the circle
+            const containerAspect = 1; 
+
             if (imgAspect > containerAspect) {
-              // Image is wider - fit to height
-              cropScale = (containerSize * 1.2) / img.height; // 20% larger to ensure coverage
+
+              cropScale = (containerSize * 1.2) / img.height;
             } else {
-              // Image is taller - fit to width
-              cropScale = (containerSize * 1.2) / img.width; // 20% larger to ensure coverage
+              cropScale = (containerSize * 1.2) / img.width;
             }
             
-            // Center the image (cropX and cropY are offsets from center)
             cropX = 0;
             cropY = 0;
             
-            // Set image source and display
             currentCropImage.src = e.target.result;
             currentCropImage.style.display = 'block';
             currentCropImage.style.visibility = 'visible';
@@ -198,7 +178,6 @@ const API = window.location.origin;
       const imgWidth = cropImageElement.width * cropScale;
       const imgHeight = cropImageElement.height * cropScale;
       
-      // Position relative to container center
       const centerX = containerSize / 2;
       const centerY = containerSize / 2;
       
@@ -227,7 +206,6 @@ const API = window.location.origin;
       croppedImageBlob = null;
     }
     
-    // Drag functionality
     if (cropContainer) {
       cropContainer.addEventListener('mousedown', (e) => {
         if (!cropImageElement) return;
@@ -252,16 +230,12 @@ const API = window.location.origin;
         const radius = containerSize / 2;
         const imgWidth = cropImageElement.width * cropScale;
         const imgHeight = cropImageElement.height * cropScale;
-        
-        // Calculate movement delta
         const deltaX = e.clientX - dragStartX;
         const deltaY = e.clientY - dragStartY;
-        
-        // Calculate new position
+
         let newX = startCropX + deltaX;
         let newY = startCropY + deltaY;
         
-        // Constrain to keep image covering the circle
         const maxX = radius + (imgWidth / 2) - radius;
         const minX = -(imgWidth / 2) + radius;
         const maxY = radius + (imgHeight / 2) - radius;
@@ -285,21 +259,18 @@ const API = window.location.origin;
       }
     });
     
-    // Prevent image drag default behavior
     if (cropImage) {
       cropImage.addEventListener('mousedown', (e) => {
         e.preventDefault();
       });
     }
     
-    // Zoom with mouse wheel - halus dan sensitivitas rendah
     if (cropContainer) {
       cropContainer.addEventListener('wheel', (e) => {
         e.preventDefault();
         if (!cropImageElement) return;
         
-        // Sensitivitas rendah: gunakan delta yang lebih kecil
-        const sensitivity = 0.02; // 2% per scroll step (sangat halus)
+        const sensitivity = 0.02; 
         const zoomFactor = 1 + (e.deltaY > 0 ? -sensitivity : sensitivity);
         const newScale = cropScale * zoomFactor;
         
@@ -308,8 +279,8 @@ const API = window.location.origin;
         
         const containerSize = currentCropContainer.offsetWidth || currentCropContainer.clientWidth || 300;
         const minScale = Math.min(containerSize / cropImageElement.width, containerSize / cropImageElement.height) * 0.8;
-        const maxScale = minScale * 4; // Bisa zoom lebih jauh
-        
+        const maxScale = minScale * 4; 
+
         if (newScale >= minScale && newScale <= maxScale) {
           cropScale = newScale;
           updateCropImage();
@@ -405,14 +376,13 @@ const API = window.location.origin;
       });
     }
     
-    // Replace existing change listener
     profileFotoInput.addEventListener('change', function () {
       if (this.files && this.files[0]) {
         openCropModal(this.files[0]);
       } else {
         const u = JSON.parse(localStorage.getItem('user') || '{}');
         if (u.avatar && profileAvatar) {
-          profileAvatar.src = u.avatar; // Cloudinary URL
+          profileAvatar.src = u.avatar; 
           profileAvatar.classList.remove('hidden');
           if (profilePlaceholder) profilePlaceholder.classList.add('hidden');
         } else {

@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnHistory   = document.getElementById("btnHistory");
   const sidebarUsername = document.getElementById("sidebarUsername");
 
-  // ---------- Auth + sidebar ----------
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (user.username) {
     document.title = user.username + " Transactions";
@@ -39,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "../src/login.html";
   });
 
-  // highlight menu aktif
   const currentPage = location.pathname.split("/").pop();
   document.querySelectorAll("aside nav a").forEach((link) => {
     const href = link.getAttribute("href");
@@ -48,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
     else link.classList.remove("bg-pink-400", "text-white", "shadow");
   });
 
-  // ---------- Tombol In / Out ----------
   btnIn?.addEventListener("click", () => (window.location.href = "in.html"));
   btnOut?.addEventListener("click", () => (window.location.href = "out.html"));
 
@@ -62,12 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
           'Content-Type': 'application/json'
         }
       });
-      console.log("📡 Response status:", res.status, res.statusText);
-      console.log("📡 Response headers:", res.headers);
+      console.log("Response status:", res.status, res.statusText);
+      console.log("Response headers:", res.headers);
       
-      // Baca response text dulu untuk debugging
       const responseText = await res.text();
-      console.log("📄 Raw response text:", responseText.substring(0, 500));
+      console.log("Raw response text:", responseText.substring(0, 500));
       
       if (!res.ok) {
         let errorData;
@@ -99,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---------- Load statistik ----------
   (async function loadStats() {
     try {
       const dash = await getJSON(`${API}/dashboard`);
@@ -116,13 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 
-  // ---------- Mapping produk & supplier ----------
   let itemsById     = {};
   let itemsByName   = {};
   let suppliersById = {};
 
   async function ensureMetaLoaded() {
-    // kalau sudah pernah load, skip
     if (Object.keys(itemsById).length > 0 || Object.keys(suppliersById).length > 0) {
       return;
     }
@@ -162,7 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getSupplierNameForTx(t) {
-    // 1) coba ambil dari field supplier di transaksi (kalau backend sudah kirim supid)
     let supId =
       t.supplier_id ||
       t.supplierId ||
@@ -170,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
       t.supId ||
       null;
 
-    // 2) kalau belum ada, coba dari product_id
     if (!supId) {
       const prodId =
         t.product_id ||
@@ -182,7 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // 3) kalau belum juga, match berdasarkan nama barang
     if (!supId) {
       const nameKey = (t.namaItem || t.itemName || t.item || "").toLowerCase();
       const prod    = itemsByName[nameKey];
@@ -191,13 +181,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // 4) konversi supId ke nama supplier
     if (supId && suppliersById[supId]) return suppliersById[supId];
-    if (supId) return supId; // fallback: tampilkan id kalau nama nggak ketemu
+    if (supId) return supId; 
     return "-";
   }
 
-  // ---------- Helper: switch view Stock Log / History ----------
   function setView(view) {
     const activeClasses   = ["bg-pink-500", "text-white"];
     const inactiveClasses = ["text-pink-600", "hover:bg-pink-50"];
@@ -226,15 +214,12 @@ document.addEventListener("DOMContentLoaded", () => {
   btnStockLog?.addEventListener("click", () => setView("stock"));
   btnHistory?.addEventListener("click", () => setView("history"));
 
-  // default: Stock Log dulu
   setView("stock");
 
-  // ---------- Render nota dengan UI yang lebih baik ----------
 function renderNotaBlock(tx, currentUserId) {
   const judul = tx.type === "IN" ? "Transaksi Masuk" : "Transaksi Keluar";
   const typeColor = tx.type === "IN" ? "bg-green-100 text-green-700 border-green-300" : "bg-red-100 text-red-700 border-red-300";
   
-  // Tentukan username yang akan ditampilkan (sama seperti di stock log)
   let akun = "-";
   if (tx.akun && tx.akun !== "System" && tx.akun !== "Unknown" && tx.akun !== null && tx.akun !== "" && tx.akun !== undefined) {
     akun = tx.akun;
@@ -244,7 +229,6 @@ function renderNotaBlock(tx, currentUserId) {
     akun = `User-${tx.user_id}`;
   }
 
-  // Highlight jika current user
   const isCurrentUser = currentUserId && (tx.user_id === currentUserId);
   const userClass = isCurrentUser ? "text-pink-600 font-semibold" : "";
   const borderClass = isCurrentUser ? "border-pink-300" : "border-pink-200";
@@ -341,13 +325,9 @@ function renderNotaBlock(tx, currentUserId) {
     notaList.innerHTML = groupedArr.map(tx => renderNotaBlock(tx, currentUserId)).join("");
   }
 
-  // ============================
-  // SEARCH + FILTER (SISIPAN)
-  // - minimal changes, hanya sisipkan fungsi dan state
-  // ============================
-  const txSearch = document.getElementById("txSearch"); // pastikan ada di HTML
-  let allRows = []; // akan diisi saat loadHistory
-  let activeFilter = "ALL"; // ALL | IN | OUT
+  const txSearch = document.getElementById("txSearch");
+  let allRows = []; 
+  let activeFilter = "ALL"; 
 
   function txMatchesSearch(tx, q) {
     if (!q) return true;
@@ -388,23 +368,19 @@ function renderNotaBlock(tx, currentUserId) {
     });
   }
 
-  // register chips if ada
   document.querySelectorAll(".tx-filter-chip").forEach((c) => {
     c.addEventListener("click", () => {
       const f = c.dataset.filter || "ALL";
-      // toggle: klik ulang kembali ke ALL
       activeFilter = (activeFilter === f) ? "ALL" : f;
       updateFilterChipVisuals();
       renderFilteredView();
     });
   });
 
-  // register search input
   txSearch?.addEventListener("input", () => {
     renderFilteredView();
   });
 
-  // Update header tabel berdasarkan filter
   function updateTableHeader() {
     const thead = document.querySelector("#stockLogContainer thead tr");
     if (!thead) return;
@@ -412,7 +388,6 @@ function renderNotaBlock(tx, currentUserId) {
     const isOutFilter = activeFilter === "OUT";
     
     if (isOutFilter) {
-      // Hapus kolom Supplier untuk filter OUT
       thead.innerHTML = `
         <th class="py-2 pr-4">Username</th>
         <th class="py-2 pr-4">Transaksi ID</th>
@@ -423,7 +398,6 @@ function renderNotaBlock(tx, currentUserId) {
         <th class="py-2 pr-4">Catatan</th>
       `;
     } else {
-      // Tampilkan kolom Supplier untuk filter ALL atau IN
       thead.innerHTML = `
         <th class="py-2 pr-4">Username</th>
         <th class="py-2 pr-4">Transaksi ID</th>
@@ -437,19 +411,15 @@ function renderNotaBlock(tx, currentUserId) {
     }
   }
 
-  // render berdasarkan filter & search
   function renderFilteredView() {
-    // gunakan logic render dari bagian loadHistory (mirip)
     if (!tbodyHist) return;
     const rows = getFilteredRows();
     
-    // Update header berdasarkan filter
     updateTableHeader();
     
     const isOutFilter = activeFilter === "OUT";
     const colCount = isOutFilter ? 7 : 8;
 
-    // STOCK LOG TABLE render
     if (!Array.isArray(rows) || rows.length === 0) {
       tbodyHist.innerHTML =
         `<tr><td colspan="${colCount}" class="py-4 text-gray-500">Belum ada riwayat transaksi sesuai filter / pencarian.</td></tr>`;
@@ -482,7 +452,6 @@ function renderNotaBlock(tx, currentUserId) {
           const rowClass = isCurrentUser ? "border-t bg-pink-50" : "border-t";
 
           if (isOutFilter) {
-            // Untuk filter OUT, tidak tampilkan kolom Supplier
             return `
               <tr class="${rowClass}">
                 <td class="py-2 pr-4 font-semibold ${isCurrentUser ? "text-pink-600" : ""}">${akun}</td>
@@ -495,7 +464,6 @@ function renderNotaBlock(tx, currentUserId) {
               </tr>
             `;
           } else {
-            // Untuk filter ALL atau IN, tampilkan kolom Supplier (dengan "-" untuk OUT)
             const supplierName = (tipeRaw === "IN") ? getSupplierNameForTx(t) : "-";
             return `
               <tr class="${rowClass}">
@@ -514,7 +482,6 @@ function renderNotaBlock(tx, currentUserId) {
         .join("");
     }
 
-    // HISTORY NOTA render (grouped)
     const grouped = {};
     rows.forEach((t) => {
       const type = (t.tipe || t.type || "").toUpperCase();
@@ -531,7 +498,6 @@ function renderNotaBlock(tx, currentUserId) {
           akun = `User-${t.user_id}`;
         }
 
-        // Hanya simpan supplier untuk transaksi IN
         const supplier = (type === "OUT") ? null : getSupplierNameForTx(t);
         
         grouped[idTx] = {
@@ -583,24 +549,20 @@ function renderNotaBlock(tx, currentUserId) {
     fillNotaHistory(groupedArr, currentUser.id);
   }
 
-  // ---------- Load history + supplier name + nota ----------
   (async function loadHistory() {
     if (!tbodyHist) return;
 
-    // Ambil user yang login dulu (untuk highlight row-nya saja)
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
     const currentUserId = currentUser.id;
 
-    // pastikan map produk & supplier sudah ada
     await ensureMetaLoaded();
 
     try {
       console.log("🔄 Loading transactions from:", `${API}/transactions`);
       const resp = await getJSON(`${API}/transactions`);
-      console.log("📥 Full API response from /transactions:", resp);
-      console.log("📥 Response keys:", Object.keys(resp || {}));
+      console.log("Full API response from /transactions:", resp);
+      console.log("Response keys:", Object.keys(resp || {}));
       
-      // Handle berbagai format response
       let rows = [];
       if (resp) {
         if (Array.isArray(resp)) {
@@ -619,12 +581,10 @@ function renderNotaBlock(tx, currentUserId) {
           console.warn("⚠️ Unexpected response format. Response keys:", Object.keys(resp));
           console.warn("⚠️ Response content:", JSON.stringify(resp).substring(0, 200));
           
-          // Jika response berisi data dashboard (totalItem, totalStok, dll), berarti endpoint salah
           if (resp.totalItem !== undefined || resp.totalStok !== undefined) {
             throw new Error("Endpoint /transactions mengembalikan data dashboard. Pastikan backend route sudah benar.");
           }
           
-          // Coba ambil semua property yang mungkin array
           for (const key in resp) {
             if (Array.isArray(resp[key])) {
               rows = resp[key];
@@ -661,12 +621,10 @@ function renderNotaBlock(tx, currentUserId) {
         return;
       }
 
-      // Simpan semua rows ke state (dipakai search/filter)
       allRows = rows;
 
-      // initial render: gunakan filtered renderer
       updateFilterChipVisuals();
-      updateTableHeader(); // Update header berdasarkan filter aktif sebelum render
+      updateTableHeader();
       renderFilteredView();
     } catch (e) {
       console.error("❌ Gagal load history:", e);
@@ -727,7 +685,6 @@ function renderNotaBlock(tx, currentUserId) {
   }
 });
 
-// ====== Print History Button ======
 const printBtn = document.getElementById("btnPrintHistory");
 if (printBtn) {
   printBtn.addEventListener("click", () => {
@@ -736,7 +693,6 @@ if (printBtn) {
   });
 }
 
-// ====== Profile Modal + Mobile Menu (from transaction.html) ======
 (function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
@@ -901,13 +857,12 @@ if (printBtn) {
     profileFotoInput?.click();
   });
 
-    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
   profileFotoInput?.addEventListener('change', function () {
     if (this.files && this.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.src = e.target.result; 
           profileAvatar.classList.remove('hidden');
         }
         if (profilePlaceholder) {
@@ -918,7 +873,6 @@ if (printBtn) {
     }
   });
 
-  // Load profile avatar on page load
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');
@@ -931,7 +885,6 @@ if (printBtn) {
   })();
 })();
 
-// ====== Mobile Menu Functionality ======
 document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const sidebar = document.getElementById('sidebar');

@@ -6,7 +6,7 @@ const router = Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 2 * 1024 * 1024 }, 
   fileFilter: (req, file, cb) => {
     if (!/^image\/(png|jpe?g|webp)$/i.test(file.mimetype)) {
       return cb(new Error("Hanya gambar PNG/JPG/WEBP"), false);

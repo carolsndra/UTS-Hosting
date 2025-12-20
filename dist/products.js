@@ -1,11 +1,11 @@
-const API = window.location.origin; 
-
+const API = window.location.origin;
 const grid = document.getElementById("grid");
 const search = document.getElementById("searchInput");
 const chipsContainer = document.getElementById("categoryChips");
 const SELECTED_CATEGORIES = new Set();
 
 let PRODUCTS = [];
+
 const fmt = new Intl.NumberFormat("id-ID", {
   style: "currency",
   currency: "IDR",
@@ -13,7 +13,8 @@ const fmt = new Intl.NumberFormat("id-ID", {
 });
 
 function resolveImg(p) {
-  const fallback = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4e6.svg";
+  const fallback =
+    "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4e6.svg";
   return p?.foto || fallback;
 }
 
@@ -21,31 +22,37 @@ function card(p) {
   const imgSrc = resolveImg(p);
   return `
     <article class="product-card bg-white rounded-lg shadow border relative overflow-visible">
-      <div class="bg-gray-50 h-48 grid place-items-center relative z-0">
-        <img src="${imgSrc}" alt="${p.namaItem ?? "-"}"
-             class="h-40 w-40 object-contain pointer-events-none"
-             onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4e6.svg';"/>
+      <div class="bg-gray-50 h-48 grid place-items-center">
+        <img src="${imgSrc}"
+          alt="${p.namaItem ?? "-"}"
+          class="h-40 w-40 object-contain"
+          onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4e6.svg';"/>
       </div>
 
-      <div class="p-4 relative z-10">
-        <span class="absolute -top-3 right-4 bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow pointer-events-none">
+      <div class="p-4 relative">
+        <span class="absolute -top-3 right-4 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
           ${p.stok ?? 0} in stock
         </span>
 
         <h3 class="text-lg font-semibold mt-2">${p.namaItem ?? "-"}</h3>
         <p class="text-sm text-gray-500">${p.keterangan ?? "-"}</p>
+
         <div class="mt-2">
-          <p class="text-xs text-pink-600 font-medium mb-1">${p.namaKategori || "Kategori"}</p>
-          <p class="text-2xl font-bold text-blue-700">${fmt.format(p.hargaSatuan || 0)}</p>
+          <p class="text-xs text-pink-600 font-medium mb-1">
+            ${p.namaKategori || "Kategori"}
+          </p>
+          <p class="text-2xl font-bold text-blue-700">
+            ${fmt.format(p.hargaSatuan || 0)}
+          </p>
         </div>
 
-        <div class="pt-4 flex gap-3 mt-2">
+        <div class="pt-4 flex gap-3">
           <button onclick="editProduct('${p.id}')"
-            class="flex-1 border rounded-lg px-3 py-2 hover:bg-gray-50 transition cursor-pointer z-20 relative">
+            class="flex-1 border rounded-lg px-3 py-2 hover:bg-gray-50">
             Edit
           </button>
           <button onclick="deleteProduct('${p.id}')"
-            class="flex-1 bg-red-600 text-white rounded-lg px-3 py-2 hover:bg-red-700 transition cursor-pointer z-20 relative">
+            class="flex-1 bg-red-600 text-white rounded-lg px-3 py-2 hover:bg-red-700">
             Delete
           </button>
         </div>
@@ -59,426 +66,122 @@ function render(list) {
 }
 
 function applySearch() {
-  const q = (search.value || "").toLowerCase().trim();
-  const catSet = SELECTED_CATEGORIES;
+  const q = (search?.value || "").toLowerCase().trim();
 
   const filtered = q
     ? PRODUCTS.filter((p) =>
         [p.namaItem, p.keterangan]
           .filter(Boolean)
-          .some((s) => String(s).toLowerCase().includes(q))
+          .some((s) => s.toLowerCase().includes(q))
       )
     : PRODUCTS;
 
-const filteredByCat =
-  catSet && catSet.size > 0
-    ? filtered.filter((p) => catSet.has(String(p.catid || "")))
-    : filtered;
+  const filteredByCat =
+    SELECTED_CATEGORIES.size > 0
+      ? filtered.filter((p) =>
+          SELECTED_CATEGORIES.has(String(p.catid || ""))
+        )
+      : filtered;
 
   render(filteredByCat);
 }
 
-function editProduct(id) {
-  // Confirm sebelum masuk halaman edit
-  if (!confirm("Yakin ingin mengedit produk ini?")) return;
-  console.log("➡️ Redirect to edit:", id);
-  window.location.href = `edit.html?id=${encodeURIComponent(id)}`;
-}
-
-
 async function reloadProducts() {
   try {
-    const res = await fetch(`${API}/items`, { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error("Gagal mengambil data produk");
+    const res = await fetch(`${API}/items`);
+    if (!res.ok) throw new Error("Gagal ambil produk");
     const data = await res.json();
-
     PRODUCTS = data.items || [];
-
-    console.log("📦 Produk dari server:", PRODUCTS);
-
     applySearch();
   } catch (err) {
     console.error(err);
     grid.innerHTML =
-      '<div class="col-span-full text-center text-red-500">Gagal mengambil data produk dari server.</div>';
+      `<div class="col-span-full text-center text-red-500">
+        Gagal memuat produk
+      </div>`;
   }
 }
 
+function editProduct(id) {
+  if (!confirm("Yakin ingin mengedit produk ini?")) return;
+  window.location.href = `edit.html?id=${encodeURIComponent(id)}`;
+}
 
 async function deleteProduct(id) {
   if (!confirm("Yakin mau hapus produk ini?")) return;
   try {
-    const res = await fetch(`${API}/items/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `Gagal hapus produk (status ${res.status})`);
-    }
-    alert("Produk berhasil dihapus!");
+    const res = await fetch(`${API}/items/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Gagal hapus produk");
     await reloadProducts();
   } catch (err) {
     alert(err.message);
-    console.error(err);
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  reloadProducts();
+
+  search?.addEventListener("input", applySearch);
+
+  chipsContainer?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    const val = btn.dataset.value;
+    btn.classList.toggle("selected");
+    SELECTED_CATEGORIES.has(val)
+      ? SELECTED_CATEGORIES.delete(val)
+      : SELECTED_CATEGORIES.add(val);
+    applySearch();
+  });
+});
+
+(function () {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const sidebarUsername = document.getElementById("sidebarUsername");
   if (sidebarUsername && user.username) {
     sidebarUsername.textContent = user.username;
   }
-});
+})();
 
-search.addEventListener("input", applySearch);
-
-// chips click handling (toggle category)
-if (chipsContainer) {
-  chipsContainer.addEventListener("click", (e) => {
-    const btn = e.target.closest(".chip");
-    if (!btn) return;
-    const val = btn.getAttribute("data-value") || "";
-    if (SELECTED_CATEGORIES.has(val)) {
-      SELECTED_CATEGORIES.delete(val);
-      btn.classList.remove("selected");
-    } else {
-      SELECTED_CATEGORIES.add(val);
-      btn.classList.add("selected");
-    }
-    applySearch();
+(function () {
+  const currentPage = location.pathname.split("/").pop();
+  document.querySelectorAll("aside nav a").forEach((link) => {
+    link.classList.toggle(
+      "bg-pink-400",
+      link.getAttribute("href") === currentPage
+    );
   });
-}
+})();
 
-reloadProducts();
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("mobileMenuBtn");
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("mobileOverlay");
 
-// ====== Logout Logic ======
-document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
-  e.preventDefault();
-  localStorage.removeItem('user');
-  window.location.href = '../src/login.html';
-});
+  if (!btn || !sidebar || !overlay) return;
 
-// ====== Profile Modal Logic ======
-document.addEventListener('DOMContentLoaded', function() {
-  const profileBtn = document.getElementById('profileBtn');
-  const profileModal = document.getElementById('profileModal');
-  const profileClose = document.getElementById('profileClose');
-  const profileLogout = document.getElementById('profileLogout');
-  const profileSave = document.getElementById('profileSave');
-  const profileCancel = document.getElementById('profileCancel');
-  const profileError = document.getElementById('profileError');
-  const sidebarUsername = document.getElementById('sidebarUsername');
-  const profileFotoInput = document.getElementById('profileFotoInput');
-  const profileAvatar = document.getElementById('profileAvatar');
-  const profileAvatarContainer = document.getElementById('profileAvatarContainer');
-  const profilePlaceholder = document.getElementById('profileAvatarPlaceholder');
+  const open = () => {
+    sidebar.classList.add("mobile-open");
+    overlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+  };
 
-  function openProfile() {
-    if (profileError) {
-      profileError.classList.add('hidden');
-      profileError.textContent = '';
-    }
-    if (profileFotoInput) profileFotoInput.value = '';
+  const close = () => {
+    sidebar.classList.remove("mobile-open");
+    overlay.classList.remove("active");
+    document.body.style.overflow = "";
+  };
 
-    const u = JSON.parse(localStorage.getItem('user') || '{}');
-    const profileIdEl = document.getElementById('profileId');
-    const profileUsernameInputEl = document.getElementById('profileUsernameInput');
-    const profileEmailInputEl = document.getElementById('profileEmailInput');
-    const profilePasswordInputEl = document.getElementById('profilePasswordInput');
-
-    if (profileIdEl) profileIdEl.textContent = u.id || '-';
-    if (profileUsernameInputEl) profileUsernameInputEl.value = u.username || '';
-    if (profileEmailInputEl) profileEmailInputEl.value = u.email || '';
-    if (profilePasswordInputEl) profilePasswordInputEl.value = '';
-    
-    const avatarUrl = u.avatar || null;
-    const pImg = document.getElementById('profileAvatar');
-    const pPlaceholder = document.getElementById('profileAvatarPlaceholder');
-
-    if (avatarUrl) {
-      if (pImg) {
-        pImg.src = avatarUrl;
-        pImg.classList.remove('hidden');
-      }
-      if (pPlaceholder) pPlaceholder.classList.add('hidden');
-
-      if (profileBtn) {
-        profileBtn.innerHTML = `
-          <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
-        `;
-      }
-    } else {
-      if (pImg) pImg.classList.add('hidden');
-      if (pPlaceholder) pPlaceholder.classList.remove('hidden');
-      if (profileBtn) profileBtn.innerHTML = '👤';
-    }
-
-    if (profileModal) {
-      profileModal.classList.remove('hidden');
-      profileModal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  function closeProfile() {
-    if (profileModal) {
-      profileModal.classList.add('hidden');
-      profileModal.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-  }
-
-  profileBtn?.addEventListener('click', (e) => { e.preventDefault(); openProfile(); });
-  profileClose?.addEventListener('click', (e) => { e.preventDefault(); closeProfile(); });
-  profileCancel?.addEventListener('click', (e) => { e.preventDefault(); closeProfile(); });
-  profileModal?.addEventListener('click', (e) => { if (e.target === profileModal) closeProfile(); });
-
-  profileLogout?.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('user'); window.location.href = '../src/login.html'; });
-
-  profileSave?.addEventListener('click', async (e) => {
+  btn.addEventListener("click", (e) => {
     e.preventDefault();
-    if (profileError) profileError.classList.add('hidden');
-    
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const id = currentUser.id;
-
-    const usernameVal = document.getElementById('profileUsernameInput').value.trim();
-    const emailVal = document.getElementById('profileEmailInput').value.trim();
-    const passwordVal = document.getElementById('profilePasswordInput').value;
-    const newFoto = document.getElementById('profileFotoInput').files[0];
-
-    if (!id) {
-      if (profileError) {
-        profileError.textContent = 'Error: User ID tidak ditemukan di penyimpanan lokal. Silakan coba login ulang.';
-        profileError.classList.remove('hidden');
-      }
-      return;
-    }
-
-    if (!usernameVal || !emailVal) {
-      if (profileError) {
-        profileError.textContent = 'Username dan email wajib diisi.';
-        profileError.classList.remove('hidden');
-      }
-      return;
-    }
-
-    const fd = new FormData();
-    fd.append("id", id);
-    fd.append("username", usernameVal);
-    fd.append("email", emailVal);
-    if (passwordVal) fd.append("password", passwordVal);
-    if (newFoto) fd.append("foto", newFoto);
-
-    const profileSaveBtn = e.target;
-    const prevText = profileSaveBtn.textContent;
-    profileSaveBtn.disabled = true;
-    profileSaveBtn.textContent = 'Saving...';
-
-    try {
-      const res = await fetch(`${API}/login/profile`, {
-        method: 'PATCH',
-        body: fd
-      });
-      let data = null;
-      try {
-        data = await res.json();
-      } catch (_) {
-        data = null; // response kosong, tidak masalah
-      }
-
-      if (!res.ok) {
-        profileError.textContent = data?.message || "Gagal memperbarui profil";
-        profileError.classList.remove("hidden");
-        return;
-      }
-
-      // SUKSES
-      localStorage.setItem("user", JSON.stringify(data.user));
-      const sb = document.getElementById('sidebarUsername');
-      if (sb) sb.textContent = data.user.username;
-      
-      const avatarUrl = data.user.avatar;
-
-      if (profileBtn) {
-        if (avatarUrl) {
-          profileBtn.innerHTML = `
-            <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
-          `;
-          if (pImg && pPlaceholder) {
-            pImg.src = avatarUrl;
-            pImg.classList.remove('hidden');
-            pPlaceholder.classList.add('hidden');
-          }
-          if (profileAvatar) {
-            profileAvatar.src = avatarUrl;
-            profileAvatar.classList.remove('hidden');
-          }
-          if (profilePlaceholder) {
-            profilePlaceholder.classList.add('hidden');
-          }
-        } else {
-          profileBtn.innerHTML = '👤';
-        }
-      }
-      
-      alert('Profil berhasil diperbarui!');
-      closeProfile();
-    } catch (err) {
-      console.error("Profile update error:", err);
-      profileError.textContent = "Gagal memproses respons server";
-      profileError.classList.remove('hidden');
-    } finally {
-      profileSaveBtn.disabled = false;
-      profileSaveBtn.textContent = prevText;
-    }
+    sidebar.classList.contains("mobile-open") ? close() : open();
   });
 
-  profileAvatarContainer?.addEventListener('click', () => {
-    profileFotoInput?.click();
-  });
+  overlay.addEventListener("click", close);
+});
 
-    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
-  profileFotoInput?.addEventListener('change', function () {
-    if (this.files && this.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
-          profileAvatar.classList.remove('hidden');
-        }
-        if (profilePlaceholder) {
-          profilePlaceholder.classList.add('hidden');
-        }
-      };
-      reader.readAsDataURL(this.files[0]);
-    }
-  });
-
-  // Load profile avatar on page load
-  (function() {
-    const u = JSON.parse(localStorage.getItem('user') || '{}');
-    const profileBtn = document.getElementById('profileBtn');
-    if (profileBtn && u.avatar) {
-      const avatarUrl = u.avatar;
-        profileBtn.innerHTML = `
-          <img src="${avatarUrl}" class="w-full h-full object-cover rounded-full"/>
-        `;
-    }
-  })();
-})();
-
-// ====== Sidebar Username ======
-(function() {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const sidebarUsername = document.getElementById('sidebarUsername');
-  if (sidebarUsername && user.username) {
-    sidebarUsername.textContent = user.username;
-  }
-})();
-
-// ====== Active Link Highlight ======
-(function() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', highlightActiveLink);
-  } else {
-    highlightActiveLink();
-  }
-  
-  function highlightActiveLink() {
-    const currentPage = location.pathname.split("/").pop();
-    const sidebarLinks = document.querySelectorAll("aside nav a");
-    sidebarLinks.forEach(link => {
-      const href = link.getAttribute("href");
-      if (href === currentPage) {
-        link.classList.add("bg-pink-400", "text-white", "shadow");
-      } else {
-        link.classList.remove("bg-pink-400", "text-white", "shadow");
-      }
-    });
-  }
-})();
-
-// ====== Mobile Menu Functionality ======
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.getElementById('sidebar');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-
-    if (!mobileMenuBtn || !sidebar || !mobileOverlay) {
-      console.error('Mobile menu elements not found', {mobileMenuBtn, sidebar, mobileOverlay});
-      return;
-    }
-
-    function openSidebar() {
-      if (sidebar) {
-        sidebar.classList.add('mobile-open');
-        sidebar.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; left: 0 !important; z-index: 100 !important; position: fixed !important; width: 16rem !important;';
-      }
-      if (mobileOverlay) {
-        mobileOverlay.classList.add('active');
-        mobileOverlay.style.cssText = 'pointer-events: auto !important; display: block !important; visibility: visible !important; z-index: 99 !important;';
-      }
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeSidebar() {
-      if (sidebar) {
-        sidebar.classList.remove('mobile-open');
-        sidebar.style.left = '-100%';
-      }
-      if (mobileOverlay) {
-        mobileOverlay.classList.remove('active');
-        mobileOverlay.style.cssText = 'pointer-events: none !important; display: none !important; visibility: hidden !important;';
-      }
-      document.body.style.overflow = '';
-    }
-
-    if (mobileMenuBtn) {
-      mobileMenuBtn.style.cssText = 'pointer-events: auto !important; z-index: 9999 !important; position: fixed !important; touch-action: manipulation;';
-      
-      const btnClone = mobileMenuBtn.cloneNode(true);
-      mobileMenuBtn.parentNode.replaceChild(btnClone, mobileMenuBtn);
-      const btn = document.getElementById('mobileMenuBtn');
-      
-      if (btn) {
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          openSidebar();
-        }, {capture: true});
-        
-        btn.addEventListener('mousedown', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          openSidebar();
-        }, {capture: true});
-        
-        btn.addEventListener('touchstart', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          openSidebar();
-        }, {capture: true});
-      }
-    }
-
-    if (mobileOverlay) {
-      mobileOverlay.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeSidebar();
-      });
-    }
-
-    document.querySelectorAll('aside nav a').forEach(link => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth <= 1024) {
-          closeSidebar();
-        }
-      });
-    });
-  }, 100);
+document.getElementById("logoutBtn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem("user");
+  window.location.href = "../src/login.html";
 });

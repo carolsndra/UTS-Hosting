@@ -7,7 +7,6 @@ const router = Router();
 router.post("/", login);
 router.post("/register", register);
 
-// penting!! tambah upload.single("foto")
 router.patch("/profile", upload.single("foto"), updateProfile);
 
 export default router;

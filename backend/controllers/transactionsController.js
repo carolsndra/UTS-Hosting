@@ -3,9 +3,6 @@ import { v4 as uuid } from "uuid";
 
 export const transactionController = {
 
-  /* ============================================================
-      CREATE TRANSACTION IN
-  ============================================================ */
   async createIn(req, res) {
     console.log("===== REQUEST BODY CREATE IN =====");
     console.log(req.body);
@@ -35,7 +32,6 @@ export const transactionController = {
 
       const tranid = generateTransactionId(lastTran?.tranid);
 
-      // INSERT HEADER
       await conn.query(
         `INSERT INTO transactions (tranid, user_id, supplier_id, transaction_type)
          VALUES (?, ?, ?, ?)`,
@@ -57,7 +53,6 @@ export const transactionController = {
 
       let currentDetailId = lastDetail?.id;
 
-      // INSERT DETAIL + UPDATE STOK
       for (const row of rows) {
         const itemId = row.itemId || row.product_id;
         const qty = row.qty || row.quantity;
@@ -110,9 +105,6 @@ export const transactionController = {
     }
   },
 
-  /* ============================================================
-      CREATE TRANSACTION OUT
-  ============================================================ */
   async createOut(req, res) {
     const { rows, user_id } = req.body;
 
@@ -218,9 +210,6 @@ export const transactionController = {
     }
   },
 
-  /* ============================================================
-      GET ALL TRANSACTIONS (FIXED)
-  ============================================================ */
   async getAllTransactions(req, res) {
     try {
       const [rows] = await pool.query(`
@@ -279,7 +268,6 @@ export const transactionController = {
     }
   },
 
-  /* ============================================================ */
   async getTodayTransactions(req, res) {
     try {
       const [[result]] = await pool.query(`
@@ -293,7 +281,6 @@ export const transactionController = {
     }
   },
 
-  /* ============================================================ */
   async summary(req, res) {
     try {
       const [[result]] = await pool.query(`
@@ -315,7 +302,6 @@ export const transactionController = {
     }
   },
 
-  /* ============================================================ */
   async summaryToday(req, res) {
     try {
       const [[result]] = await pool.query(`
@@ -338,7 +324,6 @@ export const transactionController = {
     }
   },
 
-  /* ============================================================ */
   async weekly(req, res) {
     try {
       const [rows] = await pool.query(`

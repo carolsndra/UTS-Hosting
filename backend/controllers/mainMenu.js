@@ -54,7 +54,7 @@ export const itemsController = {
     }
   },
 
-  // POST /items (Cloudinary)
+  // POST /items 
   async create(req, res) {
     try {
       const {
@@ -79,7 +79,6 @@ export const itemsController = {
         return res.status(400).json({ message: "stok harus bilangan bulat ≥ 0" });
       }
 
-      // generate ID (P001, P002, ...)
       const [last] = await db.query(
         "SELECT id FROM products ORDER BY id DESC LIMIT 1"
       );
@@ -91,7 +90,6 @@ export const itemsController = {
 
       let fotoUrl = null;
 
-      // ☁️ UPLOAD KE CLOUDINARY
       if (req.file) {
         const uploadResult = await cloudinary.uploader.upload(
           `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
@@ -119,7 +117,7 @@ export const itemsController = {
     }
   },
 
-  // PUT /items/:id (Cloudinary)
+  // PUT /items/:id 
   async update(req, res) {
     try {
       const id = req.params.id;
@@ -152,7 +150,6 @@ export const itemsController = {
         return res.status(400).json({ message: "stok harus bilangan bulat ≥ 0" });
       }
 
-      // ☁️ UPDATE FOTO KE CLOUDINARY
       if (req.file) {
         const uploadResult = await cloudinary.uploader.upload(
           `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,

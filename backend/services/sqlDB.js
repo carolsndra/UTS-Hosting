@@ -4,7 +4,6 @@ import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 
-// __dirname untuk ESModule
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -13,7 +12,6 @@ dotenv.config({
   override: false,
 });
 
-// Base config (Railway Variables)
 const poolConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -26,13 +24,6 @@ const poolConfig = {
   timezone: "+07:00",
 };
 
-// ===============================
-// ✅ SSL handling (Aiven friendly)
-// ===============================
-// 1) Kalau ada DB_SSL_CA (isi PEM string), pakai itu
-// 2) Kalau ada file ca.pem, pakai itu
-// 3) Kalau DB_SSL=true, pakai ssl: {} (cukup untuk ssl-mode=REQUIRED di banyak provider)
-// 4) Default: ssl off
 const wantSSL = (process.env.DB_SSL || "").toLowerCase() === "true";
 
 if (process.env.DB_SSL_CA && process.env.DB_SSL_CA.trim().length > 0) {
@@ -44,7 +35,7 @@ if (process.env.DB_SSL_CA && process.env.DB_SSL_CA.trim().length > 0) {
     poolConfig.ssl = { ca: fs.readFileSync(caPath, "utf8") };
     console.log("🔐 MySQL SSL enabled (ca.pem found).");
   } else if (wantSSL) {
-    poolConfig.ssl = {}; // penting untuk Aiven ssl-mode=REQUIRED
+    poolConfig.ssl = {}; 
     console.log("🔐 MySQL SSL enabled (no CA, ssl-mode=REQUIRED).");
   } else {
     console.log("🔓 MySQL SSL disabled.");
@@ -57,7 +48,6 @@ pool.on("connection", (conn) => {
   conn.query("SET time_zone = '+07:00'");
 });
 
-// Tes koneksi otomatis saat start
 (async () => {
   try {
     const conn = await pool.getConnection();
@@ -65,7 +55,7 @@ pool.on("connection", (conn) => {
     conn.release();
   } catch (err) {
     console.error("❌ Failed to connect to database FULL ERROR:");
-    console.error(err); // <-- INI PENTING
+    console.error(err); 
   }
 })();
 

@@ -1,6 +1,5 @@
-// out.js
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ out.js loaded"); // buat debug
+  console.log("✅ out.js loaded"); 
 
 const API = window.location.origin; 
   const rowsContainer = document.getElementById("rows");
@@ -9,7 +8,6 @@ const API = window.location.origin;
   const btnAddRow = document.getElementById("btnAddRow");
   const btnSubmit = document.getElementById("btnSubmit");
 
-  // ---------- Auth + sidebar ----------
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (user.username) {
     document.title = user.username + " Stock Out";
@@ -37,7 +35,6 @@ const API = window.location.origin;
     }
   });
 
-  // ---------- Helper ----------
   async function getJSON(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(res.status + " " + res.statusText);
@@ -127,7 +124,6 @@ const API = window.location.origin;
     const rowEl = rowsContainer.lastElementChild;
     await hydrate(rowEl);
     
-    // Pastikan input catatan di row baru bisa digunakan
     const noteInput = rowEl.querySelector('.note-input');
     if (noteInput) {
       noteInput.removeAttribute('disabled');
@@ -138,7 +134,6 @@ const API = window.location.origin;
       noteInput.style.opacity = '1';
       noteInput.style.background = '';
       
-      // Pastikan input bisa difokuskan
       noteInput.addEventListener('focus', function() {
         this.style.outline = '2px solid #ec4899';
       });
@@ -146,7 +141,6 @@ const API = window.location.origin;
         this.style.outline = '';
       });
       
-      // Test: pastikan input bisa diklik
       noteInput.addEventListener('click', function(e) {
         e.stopPropagation();
         this.focus();
@@ -154,7 +148,6 @@ const API = window.location.origin;
     }
   }
 
-  // ---------- Initial load items + suppliers ----------
   (async function initItems() {
     try {
       const itemsRes = await getJSON(`${API}/items`);
@@ -189,10 +182,8 @@ const API = window.location.origin;
     addRow();
   })();
 
-  // ---------- Event: Add Row ----------
   btnAddRow?.addEventListener("click", addRow);
 
-  // ---------- Submit Handler ----------
   document.getElementById("btnSubmit")?.addEventListener("click", async () => {
     if (!errorEl) return;
     errorEl.textContent = '';
@@ -262,7 +253,6 @@ const API = window.location.origin;
   });
 });
 
-// ====== Profile Modal Logic ======
 document.addEventListener('DOMContentLoaded', function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
@@ -437,13 +427,12 @@ document.addEventListener('DOMContentLoaded', function() {
     profileFotoInput?.click();
   });
 
-    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
   profileFotoInput?.addEventListener('change', function () {
     if (this.files && this.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.src = e.target.result; 
           profileAvatar.classList.remove('hidden');
         }
         if (profilePlaceholder) {
@@ -454,7 +443,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Load profile avatar on page load
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');
@@ -467,7 +455,6 @@ document.addEventListener('DOMContentLoaded', function() {
   })();
 })();
 
-// ====== Mobile Menu Functionality ======
 document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const sidebar = document.getElementById('sidebar');

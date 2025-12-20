@@ -2,7 +2,6 @@ import { db } from "../services/sqlDB.js";
 import bcrypt from "bcrypt";
 import cloudinary from "../services/cloudinary.js";
 
-/* ===================== Helper: Random ID ===================== */
 function generateUserId() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let id = "";
@@ -21,7 +20,6 @@ function generateUniqueUserId(existingIds, maxTry = 100) {
   return `${Date.now()}`.slice(-4);
 }
 
-/* ===================== LOGIN ===================== */
 export async function login(req, res) {
   try {
     const { identifier, password } = req.body || {};
@@ -62,7 +60,6 @@ export async function login(req, res) {
   }
 }
 
-/* ===================== REGISTER ===================== */
 export async function register(req, res) {
   try {
     const { username, email, password } = req.body || {};
@@ -114,7 +111,6 @@ export async function register(req, res) {
   }
 }
 
-/* ===================== UPDATE PROFILE (CLOUDINARY) ===================== */
 export async function updateProfile(req, res) {
   try {
     const { id, username, email, password } = req.body || {};
@@ -143,7 +139,6 @@ export async function updateProfile(req, res) {
 
     let avatarUrl = null;
 
-    // ☁️ UPLOAD AVATAR KE CLOUDINARY
     if (req.file) {
       const uploadResult = await cloudinary.uploader.upload(
         `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,

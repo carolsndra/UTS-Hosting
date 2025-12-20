@@ -85,14 +85,12 @@ const API = window.location.origin;
     try {
       if (!id) throw new Error("Parameter id tidak ditemukan");
 
-      // Ambil data produk
       const data = await fetchItem(id);
 
       namaBarang.value  = data.namaItem     ?? "";
       keterangan.value  = data.keterangan   ?? "";
       hargaSatuan.value = data.hargaSatuan  ?? "";
 
-      // Set kategori (readonly, hanya tampil)
       if (kategori) {
         kategori.value = data.namaKategori || data.kategori || "";
       }
@@ -115,7 +113,6 @@ const API = window.location.origin;
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    // Confirm sebelum simpan
     if (!confirm("Yakin ingin menyimpan perubahan untuk produk ini?")) return;
     
     const btn = form.querySelector('button[type="submit"]');
@@ -136,7 +133,6 @@ const API = window.location.origin;
         throw new Error(err.message || `Gagal update produk (status ${res.status})`);
       }
 
-      // Success notification
       alert("Produk berhasil diupdate!");
       window.location.href = "products.html";
     } catch (err) {
@@ -149,7 +145,6 @@ const API = window.location.origin;
   });
 });
 
-// ====== Title/Auth/Active Link ======
 (function() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const sidebarUsername = document.getElementById('sidebarUsername');
@@ -172,7 +167,6 @@ const API = window.location.origin;
   });
 })();
 
-// ====== Mobile Menu Functionality ======
 document.addEventListener('DOMContentLoaded', function() {
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const sidebar = document.getElementById('sidebar');
@@ -227,7 +221,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// ====== Profile Modal Logic ======
 document.addEventListener('DOMContentLoaded', function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
@@ -402,13 +395,12 @@ document.addEventListener('DOMContentLoaded', function() {
     profileFotoInput?.click();
   });
 
-    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
   profileFotoInput?.addEventListener('change', function () {
     if (this.files && this.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.src = e.target.result; 
           profileAvatar.classList.remove('hidden');
         }
         if (profilePlaceholder) {
@@ -419,7 +411,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Load profile avatar on page load
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');

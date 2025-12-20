@@ -1,4 +1,3 @@
-// in.js
 document.addEventListener("DOMContentLoaded", () => {
 const API = window.location.origin; 
 
@@ -6,7 +5,6 @@ const API = window.location.origin;
   const errorEl = document.getElementById("inError");
   const sidebarUsername = document.getElementById("sidebarUsername");
 
-  // ---------- Auth + sidebar ----------
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (user.username) {
     document.title = user.username + " Stock In";
@@ -136,7 +134,6 @@ const API = window.location.origin;
     }
   }
 
-  // ---------- Initial load: items & suppliers ----------
   (async function initOptions() {
     try {
       const itemsRes = await getJSON(`${API}/items`);
@@ -172,8 +169,6 @@ const API = window.location.origin;
   })();
 
   document.getElementById("btnAddRow")?.addEventListener("click", addRow);
-
-  // ---------- Submit Handler ----------
   document.getElementById("btnSubmit")?.addEventListener("click", async () => {
     if (!errorEl) return;
     errorEl.textContent = '';
@@ -221,10 +216,8 @@ const API = window.location.origin;
         return;
       }
 
-      // Ambil supplier_id dari row pertama (jika ada) untuk transaction header
       const supplier_id = payload.length > 0 && payload[0].supplierId ? payload[0].supplierId : null;
       
-      // Hapus supplierId dari setiap row karena backend tidak menggunakannya
       const cleanPayload = payload.map(row => ({
         itemId: row.itemId,
         qty: row.qty,
@@ -255,7 +248,6 @@ const API = window.location.origin;
   });
 });
 
-// ====== Profile Modal Logic ======
 document.addEventListener('DOMContentLoaded', function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
@@ -429,13 +421,12 @@ document.addEventListener('DOMContentLoaded', function() {
     profileFotoInput?.click();
   });
 
-    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
   profileFotoInput?.addEventListener('change', function () {
     if (this.files && this.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.src = e.target.result; 
           profileAvatar.classList.remove('hidden');
         }
         if (profilePlaceholder) {
@@ -446,7 +437,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Load profile avatar on page load
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');

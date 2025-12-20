@@ -47,7 +47,6 @@ const API = window.location.origin;
     `;
   }
 
-  // --- SUPPLIER ROW: nama + kontak + alamat ---
   function supplierRow(s) {
     const name   = s?.namaSupplier || s?.nama || s?.name || "-";
     const kontak = s?.kontak || s?.telepon || s?.phone || "-";
@@ -72,10 +71,8 @@ const API = window.location.origin;
   }
 
   let cachedItems = [];
-  let cachedSuppliers = null; // null = belum pernah load
+  let cachedSuppliers = null; 
   let dashCache   = { totalItem: 0, totalStok: 0, totalHarga: 0 };
-
-  // cache statistik tambahan (untuk print + summary)
   let extraStatsCache = {
     totalKategori: 0,
     totalSupplier: 0,
@@ -85,11 +82,8 @@ const API = window.location.origin;
     profitToday: 0,
   };
 
-  // ------- Initial load: dashboard + products (dipisah supaya tidak saling merusak) -------
 try {
   const dash = await getJSON(`${API}/dashboard`);
-
-  // Update dashboard
   dashCache = {
     totalItem : dash.totalItem  ?? 0,
     totalStok : dash.totalStok  ?? 0,
@@ -101,7 +95,6 @@ try {
   if (elStok)  elStok.textContent  = dashCache.totalStok;
   if (elHarga) elHarga.textContent = rupiah(dashCache.totalHarga);
 
-  // Update kategori langsung dari backend
   const statKategoriEl = document.getElementById("statKategori");
   if (statKategoriEl) {
     statKategoriEl.textContent = dashCache.totalKategori;
@@ -114,7 +107,6 @@ try {
   console.error("Dashboard error:", err);
 }
 
-// Load list products (AMAN dari error dashboard)
 if (listProductsEl) {
   try {
     const itemsRes = await getJSON(`${API}/items`);
@@ -127,7 +119,6 @@ if (listProductsEl) {
   }
 }
 
-  // ------- Tabs behavior -------
   function setActiveTab(tab) {
     const activeAdd       = ["bg-pink-500","text-white"];
     const activeRemove    = ["text-pink-600","hover:bg-pink-50"];
@@ -159,9 +150,8 @@ if (listProductsEl) {
       listSuppliersEl?.classList.remove("hidden");
       listProductsEl?.classList.add("hidden");
 
-      // alat supplier hanya muncul di tab ini
       supplierTools?.classList.remove("hidden");
-      addSupplierBox?.classList.add("hidden"); // form hanya muncul kalau tombol + diklik
+      addSupplierBox?.classList.add("hidden"); 
     }
   }
 
@@ -169,7 +159,6 @@ if (listProductsEl) {
 async function ensureSuppliersLoaded() {
   if (!listSuppliersEl) return;
 
-  // Kalau data supplier sudah ada di cache, tinggal render ke UI
   if (cachedSuppliers !== null) {
     const suppliers = cachedSuppliers;
 
@@ -182,7 +171,6 @@ async function ensureSuppliersLoaded() {
     return;
   }
 
-  // Kalau belum pernah load sama sekali, fetch ke backend
   try {
     const resp = await getJSON(`${API}/suppliers`);
     const suppliers = resp?.suppliers || resp || [];
@@ -195,7 +183,7 @@ async function ensureSuppliersLoaded() {
       listSuppliersEl.innerHTML = suppliers.map(supplierRow).join("");
     }
   } catch (e) {
-    cachedSuppliers = []; // tandai sudah coba, tapi gagal
+    cachedSuppliers = []; 
     listSuppliersEl.innerHTML =
       `<li class="text-gray-500">
         Belum ada data supplier atau endpoint belum tersedia.
@@ -252,7 +240,6 @@ async function ensureSuppliersLoaded() {
       const data = await res.json();
       const newSupplier = data.supplier || data.data || data;
 
-      // update cache & list
       if (!Array.isArray(cachedSuppliers)) cachedSuppliers = [];
       cachedSuppliers.push(newSupplier);
       if (listSuppliersEl) {
@@ -277,10 +264,8 @@ async function ensureSuppliersLoaded() {
     setActiveTab("suppliers");
   });
 
-  // default: products tab
   setActiveTab("products");
 
-  // ------- Print (produk saja) -------
   function fillPrintSummary(dash, extra = extraStatsCache) {
     const pItem   = document.getElementById("pTotalItem");
     const pStok   = document.getElementById("pTotalStok");
@@ -311,7 +296,6 @@ function buildPrintTable(items) {
   const tbody = document.querySelector("#printTable tbody");
   if (!tbody) return;
 
-  // Buat map supid -> object supplier
   const supplierMap = {};
   if (Array.isArray(cachedSuppliers)) {
     cachedSuppliers.forEach((s) => {
@@ -324,14 +308,12 @@ function buildPrintTable(items) {
 
   tbody.innerHTML = items
     .map((p, i) => {
-      // coba pakai nama yang sudah di-join dulu (kalau memang ada)
       let supplierName =
         p.namaSupplier ||
         p.supplierName ||
         p.supplier ||
         "";
 
-      // kalau belum ada nama, coba cari berdasarkan id supplier di item
       if (!supplierName && Object.keys(supplierMap).length > 0) {
         const supKey =
           p.supid ??
@@ -367,8 +349,6 @@ function buildPrintTable(items) {
     .join("");
 }
 
-
-  // ====== Statistik Tambahan ======
   async function loadExtraStats() {
     const statKategoriEl     = document.getElementById("statKategori");
     const statSupplierEl     = document.getElementById("statSupplier");
@@ -381,7 +361,6 @@ function buildPrintTable(items) {
     const chartPopularEl     = document.getElementById("chartPopular");
     const lowStockListEl     = document.getElementById("lowStockList");
 
-    // kalau semua elemen ini tidak ada (misal file dipakai di halaman lain), jangan lanjut
     if (
       !statKategoriEl &&
       !statSupplierEl &&
@@ -398,7 +377,6 @@ function buildPrintTable(items) {
     }
 
     try {
-      // Gunakan endpoint backend yang tersedia
       const [itemsRes, suppliersRes, txTodayRes, txSummaryTodayRes, txRes] = await Promise.all([
         getJSON(`${API}/items`),
         getJSON(`${API}/suppliers`),
@@ -413,9 +391,6 @@ cachedSuppliers = suppliers;
 const txRows =
   txRes.transactions || txRes.items || txRes.data || txRes || [];
 
-
-      // --- Summary: kategori, supplier ---
-      // Kategori sudah diambil dari /dashboard, skip jika sudah ada
       if (statKategoriEl && (!statKategoriEl.textContent || statKategoriEl.textContent === "...")) {
         const kategoriSet = new Set(
           items
@@ -433,15 +408,12 @@ const txRows =
         statSupplierEl.textContent = totalSupplier;
       }
 
-      // --- Transaksi hari ini dari endpoint backend ---
       const txTodayCount = txTodayRes.total || 0;
       extraStatsCache.txToday = txTodayCount;
       if (statTxTodayEl) {
         statTxTodayEl.textContent = txTodayCount;
       }
 
-      // --- Pemasukan, pengeluaran, profit dari endpoint summary today ---
-      // Backend sudah benar: pemasukan = OUT (penjualan), pengeluaran = IN (pembelian)
       const incomeToday = txSummaryTodayRes.pemasukan || 0;  // OUT = penjualan = pemasukan
       const outcomeToday = txSummaryTodayRes.pengeluaran || 0;  // IN = pembelian = pengeluaran
       const profitToday = txSummaryTodayRes.profit || (incomeToday - outcomeToday);
@@ -460,7 +432,6 @@ const txRows =
         statProfitTodayEl.textContent = rupiah(profitToday);
       }
 
-      // --- Alert stok < 5 + daftar barang stok < 5 ---
       const lowStock = items.filter(
         (p) => Number(p.stok ?? p.stock ?? 0) < 5
       );
@@ -513,39 +484,28 @@ const txRows =
         }
       }
             
-// --- Grafik Weekly (Human Friendly + 3 garis: Total, IN, OUT) ---
 if (chartWeeklyEl && typeof Chart !== "undefined") {
-
-  // Parse tanggal dari backend (misal "01/12/2025" atau "2025-12-01")
   function parseDMY(str) {
     if (!str || typeof str !== "string") return new Date(str);
-
-    // coba format DD/MM/YYYY
     const parts = str.split("/");
     if (parts.length === 3) {
       const [day, month, year] = parts.map(Number);
       return new Date(year, month - 1, day);
     }
-
-    // fallback: biarkan Date coba parse
     return new Date(str);
   }
 
-  // Hitung info minggu dari sebuah tanggal
   function getWeekInfo(dateObj) {
     const d = new Date(dateObj);
-    const day = d.getDay() || 7; // Minggu = 7
+    const day = d.getDay() || 7; 
 
     const start = new Date(d);
-    start.setDate(d.getDate() - (day - 1)); // mundur ke Senin
+    start.setDate(d.getDate() - (day - 1));
 
     const end = new Date(start);
-    end.setDate(start.getDate() + 6); // sampai Minggu
+    end.setDate(start.getDate() + 6); 
+    const isoKey = start.toISOString().slice(0, 10); 
 
-    // key untuk sorting (ISO, aman di-sort string)
-    const isoKey = start.toISOString().slice(0, 10); // "2025-12-01"
-
-    // label yang ditampilkan di grafik
 const monthsShort = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 const monthName = monthsShort[start.getMonth()];
 const label = `${start.getDate()}–${end.getDate()} ${monthName} ${start.getFullYear()}`;
@@ -554,7 +514,6 @@ return { isoKey, label };
 
   }
 
-  // weeklyObj: { isoKey: { label, total, in, out } }
   const weeklyObj = {};
 
   txRows.forEach((t) => {
@@ -569,13 +528,12 @@ return { isoKey, label };
       weeklyObj[isoKey] = { label, total: 0, in: 0, out: 0 };
     }
 
-    weeklyObj[isoKey].total += 1; // hitung per transaksi
+    weeklyObj[isoKey].total += 1; 
     if (type === "IN")  weeklyObj[isoKey].in  += 1;
     if (type === "OUT") weeklyObj[isoKey].out += 1;
   });
 
-  // Urutkan berdasarkan tanggal awal minggu (ISO asc → minggu paling awal di kiri)
-  const sortedKeys = Object.keys(weeklyObj).sort(); // "2025-12-01", "2025-12-08", ...
+  const sortedKeys = Object.keys(weeklyObj).sort(); 
 
   if (sortedKeys.length > 0) {
     const labels = sortedKeys.map((k) => weeklyObj[k].label);
@@ -619,7 +577,7 @@ return { isoKey, label };
         scales: {
 x: {
   ticks: {
-    autoSkip: false,     // jangan skip label, tampilin semua
+    autoSkip: false,     
     maxRotation: 0,
     minRotation: 0,
   },
@@ -635,7 +593,6 @@ x: {
   }
 }
 
-      // --- Grafik Barang Paling Banyak IN / OUT (dipisah) ---
       if (chartPopularEl && typeof Chart !== "undefined") {
         const popularity = {};
         txRows.forEach((t) => {
@@ -665,7 +622,7 @@ x: {
             (a, b) =>
               (b[1].in + b[1].out) - (a[1].in + a[1].out)
           )
-          .slice(0, 10); // top 10 saja biar rapi
+          .slice(0, 10); 
 
         const labels = entries.map(([name]) => name);
         const dataIn  = entries.map(([, v]) => v.in);
@@ -680,12 +637,12 @@ x: {
                 {
                   label: "Total IN",
                   data: dataIn,
-                  backgroundColor: "#22c55e", // hijau
+                  backgroundColor: "#22c55e", 
                 },
                 {
                   label: "Total OUT",
                   data: dataOut,
-                  backgroundColor: "#ef4444", // merah
+                  backgroundColor: "#ef4444",
                 },
               ],
             },
@@ -721,12 +678,9 @@ x: {
     }
   }
 
-  // jalankan statistik tambahan
   loadExtraStats();
 
-  // ------- Print handler -------
 window.handlePrint = async function () {
-  // Pastikan data supplier sudah ada
   if (cachedSuppliers === null) {
     try {
       const resp = await getJSON(`${API}/suppliers`);
@@ -744,7 +698,6 @@ window.handlePrint = async function () {
 
 });
 
-// ====== Title/Auth/Active Link ======
 (function() {
   const userTitle = JSON.parse(localStorage.getItem('user') || '{}');
   if (userTitle.username) document.title = userTitle.username + ' Dashboard';
@@ -759,7 +712,6 @@ window.handlePrint = async function () {
     window.location.href = '../src/login.html';
   });
 
-  // ====== Active Link Highlighting ======
   const currentPage = location.pathname.split("/").pop();
   document.querySelectorAll("aside nav a").forEach(link => {
     const href = link.getAttribute("href");
@@ -767,7 +719,6 @@ window.handlePrint = async function () {
     else link.classList.remove("bg-pink-400","text-white","shadow");
   });
 
-  // ====== Mobile Menu Functionality ======
   document.addEventListener('DOMContentLoaded', function() {
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.getElementById('sidebar');
@@ -792,14 +743,12 @@ window.handlePrint = async function () {
     function closeSidebar() {
       if (sidebar) {
         sidebar.classList.remove('mobile-open');
-        // Jangan reset display, biarkan CSS yang handle
       }
       if (mobileOverlay) mobileOverlay.classList.remove('active');
       document.body.style.overflow = '';
     }
 
     if (mobileMenuBtn) {
-      // Pastikan tombol bisa diklik
       mobileMenuBtn.style.pointerEvents = 'auto';
       mobileMenuBtn.style.zIndex = '101';
       mobileMenuBtn.style.position = 'fixed';
@@ -810,7 +759,6 @@ window.handlePrint = async function () {
         openSidebar();
       });
       
-      // Tambahkan juga mousedown untuk memastikan event terdeteksi
       mobileMenuBtn.addEventListener('mousedown', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -826,7 +774,6 @@ window.handlePrint = async function () {
       });
     }
 
-    // Close sidebar when clicking on nav links (mobile)
     document.querySelectorAll('aside nav a').forEach(link => {
       link.addEventListener('click', () => {
         if (window.innerWidth <= 1024) {
@@ -837,7 +784,6 @@ window.handlePrint = async function () {
   });
 })();
 
-// ====== Profile Modal Logic (Shared) ======
 document.addEventListener('DOMContentLoaded', function() {
   const profileBtn = document.getElementById('profileBtn');
   const profileModal = document.getElementById('profileModal');
@@ -1011,13 +957,12 @@ document.addEventListener('DOMContentLoaded', function() {
     profileFotoInput?.click();
   });
 
-    // 🔥 PREVIEW FOTO PROFILE SAAT DIPILIH (SEBELUM SAVE)
   profileFotoInput?.addEventListener('change', function () {
     if (this.files && this.files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (profileAvatar) {
-          profileAvatar.src = e.target.result; // base64 preview
+          profileAvatar.src = e.target.result; 
           profileAvatar.classList.remove('hidden');
         }
         if (profilePlaceholder) {
@@ -1027,8 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.readAsDataURL(this.files[0]);
     }
   });
-
-  // Load profile avatar on page load
+  
   (function() {
     const u = JSON.parse(localStorage.getItem('user') || '{}');
     const profileBtn = document.getElementById('profileBtn');
